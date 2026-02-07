@@ -1,0 +1,22 @@
+# Docker 镜像同步清单
+# 格式: [平台/]镜像名[:标签]
+# 平台默认 docker.io，标签默认 latest
+# 以 # 开头的行为注释
+
+# === Docker Official Images ===
+docker:27
+openjdk:25
+maven:3
+maven:3.9.9
+nginx:latest
+alpine:latest
+busybox:latest
+
+# === GitHub Container Registry ===
+ghcr.io/graalvm/graalvm-ce:ol9-java11-22.3.3
+ghcr.io/graalvm/graalvm-community:21
+
+# === 添加更多镜像 ===
+# redis:7
+# postgres:16
+# mysql:8.0
