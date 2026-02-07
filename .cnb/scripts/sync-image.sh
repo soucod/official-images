@@ -39,6 +39,7 @@ DEFAULT_PLATFORM="docker.io"
 DEFAULT_TAG="latest"
 DEFAULT_ARCH="amd64"
 DRY_RUN=false
+SKIP_EXISTING=false
 
 # 参数解析
 IMAGE=""
@@ -61,6 +62,7 @@ usage() {
   --tag TAG          镜像标签 (默认从镜像名解析)
   --arch ARCH        架构 (默认: amd64)
   --platform PLAT    源平台 (默认: docker.io)
+  --skip-existing    如果目标镜像已存在则跳过 (返回码 2)
   --dry-run          仅打印命令，不执行
   -h, --help         显示帮助
 
@@ -135,6 +137,10 @@ main() {
                 DRY_RUN=true
                 shift
                 ;;
+            --skip-existing)
+                SKIP_EXISTING=true
+                shift
+                ;;
             -h|--help)
                 usage
                 ;;
@@ -190,6 +196,14 @@ main() {
         log_warn "[DRY-RUN] 以下命令不会实际执行"
     fi
 
+    # 检查是否跳过已存在的镜像
+    if [[ "$SKIP_EXISTING" == true ]] && [[ "$DRY_RUN" != true ]]; then
+        if check_image_exists "$target_image"; then
+            log_info "⊘ 镜像已存在，跳过: $target_image"
+            exit 2  # 返回码 2 表示跳过
+        fi
+    fi
+
     # 检测使用 skopeo 还是 docker
     if command -v skopeo &> /dev/null; then
         sync_with_skopeo "$source_image" "$target_image"
@@ -198,6 +212,17 @@ main() {
     fi
 
     log_info "✓ 同步完成: $target_image"
+}
+
+# 检查目标镜像是否已存在
+check_image_exists() {
+    local target="$1"
+    
+    # 使用 docker manifest inspect 检查镜像是否存在
+    if docker manifest inspect "$target" >/dev/null 2>&1; then
+        return 0  # 存在
+    fi
+    return 1  # 不存在
 }
 
 # 使用 skopeo 同步 (推荐，无需本地存储)

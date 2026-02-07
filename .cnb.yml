@@ -15,7 +15,7 @@ avwq_dev:
         - name: 同步所有镜像
           script: |
             chmod +x .cnb/scripts/*.sh
-            ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64
+            ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing
 
 # ============================================================
 # 2. 手动触发 - 同步单个镜像 (由 .cnb/web_trigger.yml 按钮触发)
