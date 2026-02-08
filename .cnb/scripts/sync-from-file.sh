@@ -21,7 +21,7 @@ else
 fi
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-# 加载 Issue 助手
+# 加载报告生成助手
 source "${SCRIPT_DIR}/issue-helper.sh" 2>/dev/null || true
 
 # 颜色输出
@@ -42,7 +42,6 @@ ARCH="amd64"
 PARALLEL=3
 DRY_RUN=false
 SKIP_EXISTING=false
-CREATE_ISSUE=true
 
 # 同步结果文件
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
@@ -60,7 +59,6 @@ usage() {
   --parallel N       并行数量 (默认: 3)
   --skip-existing    跳过已存在的镜像
   --dry-run          仅打印，不执行
-  --create-issue     创建 Issue 记录结果
   -h, --help         显示帮助
 EOF
     exit 0
@@ -74,7 +72,6 @@ while [[ $# -gt 0 ]]; do
         --parallel) PARALLEL="$2"; shift 2 ;;
         --dry-run) DRY_RUN=true; shift ;;
         --skip-existing) SKIP_EXISTING=true; shift ;;
-        --create-issue) CREATE_ISSUE=true; shift ;;
         -h|--help) usage ;;
         -*) log_error "未知选项: $1"; exit 1 ;;
         *) IMAGE_FILE="$1"; shift ;;
@@ -174,43 +171,9 @@ log_info "生成同步报告: $REPORT_FILE"
     generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" "$IMAGE_FILE"
 } > "$REPORT_FILE" 2>/dev/null || true
 
-# Issue 更新逻辑
-# 优先使用 CNB_ISSUE_IID (Issue 事件触发时自动注入)
-# 否则尝试创建新 Issue
-if [[ "$DRY_RUN" != true ]]; then
-    ISSUE_IID="${CNB_ISSUE_IID:-}"
-    
-    if [[ -n "$ISSUE_IID" ]]; then
-        # Issue 事件触发，直接更新
-        log_info "更新 Issue #$ISSUE_IID 内容..."
-        REPORT_CONTENT=$(cat "$REPORT_FILE" 2>/dev/null | head -c 50000 || echo "")
-        REPORT_ESCAPED=$(echo "$REPORT_CONTENT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ' | sed 's/  */ /g')
-        issue_update "$ISSUE_IID" "$REPORT_ESCAPED" 2>/dev/null || true
-        
-        if [[ $FAILED_COUNT -eq 0 ]]; then
-            issue_close "$ISSUE_IID" 2>/dev/null || true
-        fi
-    else
-        # 非 Issue 事件触发，尝试创建新 Issue
-        log_info "创建同步 Issue..."
-        ISSUE_TITLE="sync-report-${TIMESTAMP}"
-        ISSUE_BODY="## 🔄 镜像同步任务\\n\\n⏳ 同步进行中..."
-        ISSUE_IID=$(issue_create "$ISSUE_TITLE" "$ISSUE_BODY" 2>/dev/null || echo "")
-        
-        if [[ -n "$ISSUE_IID" ]]; then
-            log_info "更新 Issue #$ISSUE_IID 内容..."
-            REPORT_CONTENT=$(cat "$REPORT_FILE" 2>/dev/null | head -c 50000 || echo "")
-            REPORT_ESCAPED=$(echo "$REPORT_CONTENT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ' | sed 's/  */ /g')
-            issue_update "$ISSUE_IID" "$REPORT_ESCAPED" 2>/dev/null || true
-            
-            if [[ $FAILED_COUNT -eq 0 ]]; then
-                issue_close "$ISSUE_IID" 2>/dev/null || true
-            fi
-        else
-            log_info "Issue 创建跳过（可能 CNB_TOKEN 未配置或无权限）"
-        fi
-    fi
-fi
+# Issue 处理由 CNB 内置任务 git:issue-update 完成
+# 脚本只负责生成 SYNC_REPORT.md 文件
+log_info "同步报告已生成，Issue 更新由 CNB 内置任务处理"
 
 log_info "报告已生成: $REPORT_FILE"
 
