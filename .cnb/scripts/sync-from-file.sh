@@ -178,7 +178,7 @@ log_info "========================================"
 # 更新 Issue (如果启用)
 if [[ -n "$ISSUE_IID" ]] && [[ "$DRY_RUN" != true ]]; then
     log_info "更新 Issue #$ISSUE_IID..."
-    REPORT=$(generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" 2>/dev/null || echo "")
+    REPORT=$(generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" "$IMAGE_FILE" 2>/dev/null || echo "")
     if [[ -n "$REPORT" ]]; then
         # 转义特殊字符
         REPORT_ESCAPED=$(echo "$REPORT" | sed 's/"/\\"/g' | tr '\n' '\\' | sed 's/\\/\\n/g')

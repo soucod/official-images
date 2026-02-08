@@ -136,59 +136,97 @@ generate_sync_report() {
     local skipped_file="${3:-/tmp/sync-skipped-$$.txt}"
     local arch="${4:-amd64}"
     local start_time="${5:-$(date '+%Y-%m-%d %H:%M:%S')}"
+    local source_file="${6:-docker-images.txt}"
     
     local success_count=$(wc -l < "$success_file" 2>/dev/null | tr -d ' ' || echo 0)
     local failed_count=$(wc -l < "$failed_file" 2>/dev/null | tr -d ' ' || echo 0)
     local skipped_count=$(wc -l < "$skipped_file" 2>/dev/null | tr -d ' ' || echo 0)
     local total=$((success_count + failed_count + skipped_count))
+    local end_time=$(date '+%Y-%m-%d %H:%M:%S')
     
     cat << EOF
-## 📊 同步统计
+# 🔄 Docker 镜像同步报告
+
+## 📋 任务信息
 
 | 项目 | 值 |
 |------|------|
+| 📁 来源文件 | \`$source_file\` |
+| 🏗️ 目标架构 | \`$arch\` |
 | 🕐 开始时间 | $start_time |
-| 🏗️ 架构 | $arch |
-| 📦 总计 | $total |
-| ✅ 成功 | $success_count |
-| ⊘ 跳过 | $skipped_count |
-| ❌ 失败 | $failed_count |
+| 🕐 结束时间 | $end_time |
+
+---
+
+## 📊 同步统计
+
+| 状态 | 数量 | 说明 |
+|------|------|------|
+| ✅ 成功 | **$success_count** | 已推送到 CNB 仓库 |
+| ⊘ 跳过 | $skipped_count | 已存在或未更新 |
+| ❌ 失败 | $failed_count | 同步失败需检查 |
+| 📦 **总计** | **$total** | |
 
 ---
 
 EOF
 
+    # 失败列表 (始终展开，重要信息)
     if [[ -s "$failed_file" ]]; then
-        echo "## ❌ 失败列表"
+        echo "## ❌ 失败镜像 ($failed_count 个)"
         echo ""
-        echo '```'
-        cat "$failed_file"
-        echo '```'
+        echo "| # | 镜像 |"
+        echo "|---|------|"
+        local idx=0
+        while read -r img; do
+            idx=$((idx + 1))
+            echo "| $idx | \`$img\` |"
+        done < "$failed_file"
+        echo ""
+        echo "---"
         echo ""
     fi
 
+    # 成功列表 (使用表格，折叠)
     if [[ -s "$success_file" ]]; then
-        echo "## ✅ 成功列表"
+        echo "## ✅ 成功镜像 ($success_count 个)"
         echo ""
-        echo "<details><summary>展开查看 ($success_count 个)</summary>"
+        echo "<details><summary>点击展开查看</summary>"
         echo ""
-        echo '```'
-        cat "$success_file"
-        echo '```'
+        echo "| # | 镜像 |"
+        echo "|---|------|"
+        local idx=0
+        while read -r img; do
+            idx=$((idx + 1))
+            echo "| $idx | \`$img\` |"
+        done < "$success_file"
         echo ""
         echo "</details>"
+        echo ""
+        echo "---"
         echo ""
     fi
 
+    # 跳过列表 (折叠)
     if [[ -s "$skipped_file" ]]; then
-        echo "## ⊘ 跳过列表"
+        echo "## ⊘ 跳过镜像 ($skipped_count 个)"
         echo ""
-        echo "<details><summary>展开查看 ($skipped_count 个)</summary>"
+        echo "<details><summary>点击展开查看</summary>"
         echo ""
-        echo '```'
-        cat "$skipped_file"
-        echo '```'
+        echo "| # | 镜像 |"
+        echo "|---|------|"
+        local idx=0
+        while read -r img; do
+            idx=$((idx + 1))
+            echo "| $idx | \`$img\` |"
+        done < "$skipped_file"
         echo ""
         echo "</details>"
     fi
+
+    echo ""
+    echo "---"
+    echo ""
+    echo "> 📌 本报告由 CNB Docker 镜像同步工具自动生成"
 }
+
