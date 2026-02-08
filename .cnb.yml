@@ -8,6 +8,7 @@ avwq_dev:
   push:
     - services:
         - docker
+      timeout: 23h
       env:
         CNB_ORG: avwq
         CNB_PROJECT: soucod/official-images
@@ -16,6 +17,15 @@ avwq_dev:
           script: |
             chmod +x .cnb/scripts/*.sh
             bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3
+        # 使用 CNB 内置任务更新 Issue
+        - name: 更新同步 Issue
+          type: git:issue-update
+          options:
+            fromFile: SYNC_REPORT.md
+            label:
+              add: sync-report
+            state: close
+          allow_failure: true
 
 # ============================================================
 # 2. 手动触发 - 同步单个镜像 (由 .cnb/web_trigger.yml 按钮触发)

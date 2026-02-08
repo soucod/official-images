@@ -43,8 +43,27 @@ issue_create() {
     repo_encoded=$(url_encode "$CNB_REPO_SLUG")
     
     log_issue "创建 Issue: $title"
+    log_issue "仓库: $CNB_REPO_SLUG"
     
+    # 尝试 CNB OpenAPI 格式 (v1)
     local response
+    response=$(curl -s -X POST \
+        "${CNB_API_URL}/${CNB_REPO_SLUG}/-/issues" \
+        -H "Authorization: Bearer ${CNB_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"title\": \"${title}\", \"description\": \"${body}\"}" \
+        2>/dev/null) || true
+    
+    local iid
+    iid=$(echo "$response" | grep -oE '"iid"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
+    
+    if [[ -n "$iid" ]]; then
+        log_issue "✓ Issue #$iid 创建成功"
+        echo "$iid"
+        return 0
+    fi
+    
+    # 尝试 GitLab API v4 格式
     response=$(curl -s -X POST \
         "${CNB_API_URL}/api/v4/projects/${repo_encoded}/issues" \
         -H "PRIVATE-TOKEN: ${CNB_TOKEN}" \
@@ -52,16 +71,18 @@ issue_create() {
         -d "{\"title\": \"${title}\", \"description\": \"${body}\"}" \
         2>/dev/null) || true
     
-    local iid
-    iid=$(echo "$response" | grep -o '"iid":[0-9]*' | head -1 | grep -o '[0-9]*' || echo "")
+    iid=$(echo "$response" | grep -oE '"iid"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
     
     if [[ -n "$iid" ]]; then
-        log_issue "✓ Issue #$iid 创建成功"
+        log_issue "✓ Issue #$iid 创建成功 (v4 API)"
         echo "$iid"
-    else
-        log_issue "⚠️ Issue 创建失败: $response"
-        return 1
+        return 0
     fi
+    
+    # 记录失败但不阻塞同步
+    log_issue "⚠️ Issue 创建失败，继续同步任务"
+    log_issue "响应: ${response:0:100}"
+    return 1
 }
 
 # 添加 Issue 评论

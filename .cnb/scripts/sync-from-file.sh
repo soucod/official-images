@@ -89,8 +89,8 @@ if [[ ! -f "$IMAGE_FILE" ]]; then
     exit 0
 fi
 
-# 提取有效镜像
-IMAGES=$(tr -d '\r' < "$IMAGE_FILE" | grep -v '^#' | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+# 提取有效镜像 (过滤注释、空行、配置行)
+IMAGES=$(tr -d '\r' < "$IMAGE_FILE" | grep -v '^#' | grep -v '^--' | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 IMAGE_COUNT=$(echo "$IMAGES" | grep -c . || echo 0)
 
 if [[ "$IMAGE_COUNT" -eq 0 ]]; then
@@ -116,16 +116,7 @@ log_info "有效镜像: $IMAGE_COUNT 个"
 log_info "架构:     $ARCH"
 log_info "并行数:   $PARALLEL"
 log_info "跳过已存在: $SKIP_EXISTING"
-log_info "创建 Issue: $CREATE_ISSUE"
 log_info "========================================"
-
-# 创建 Issue (如果启用)
-ISSUE_IID=""
-if [[ "$CREATE_ISSUE" == true ]] && [[ "$DRY_RUN" != true ]]; then
-    ISSUE_TITLE="sync-artifact-${TIMESTAMP}"
-    ISSUE_BODY="## 🔄 镜像同步任务\\n\\n- **开始时间**: ${START_TIME}\\n- **架构**: ${ARCH}\\n- **镜像数量**: ${IMAGE_COUNT}\\n\\n⏳ 同步进行中..."
-    ISSUE_IID=$(issue_create "$ISSUE_TITLE" "$ISSUE_BODY" 2>/dev/null || echo "")
-fi
 
 # 同步单个镜像
 sync_single() {
@@ -175,22 +166,15 @@ log_info "跳过:   $SKIPPED_COUNT"
 log_info "失败:   $FAILED_COUNT"
 log_info "========================================"
 
-# 更新 Issue (如果启用)
-if [[ -n "$ISSUE_IID" ]] && [[ "$DRY_RUN" != true ]]; then
-    log_info "更新 Issue #$ISSUE_IID..."
-    REPORT=$(generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" "$IMAGE_FILE" 2>/dev/null || echo "")
-    if [[ -n "$REPORT" ]]; then
-        # 转义特殊字符
-        REPORT_ESCAPED=$(echo "$REPORT" | sed 's/"/\\"/g' | tr '\n' '\\' | sed 's/\\/\\n/g')
-        issue_update "$ISSUE_IID" "$REPORT_ESCAPED" 2>/dev/null || true
-        log_info "Issue #$ISSUE_IID 已更新"
-    fi
-    
-    # 如果有失败则保持 Issue 打开，否则关闭
-    if [[ $FAILED_COUNT -eq 0 ]]; then
-        issue_close "$ISSUE_IID" 2>/dev/null || true
-    fi
-fi
+# 生成同步报告文件
+REPORT_FILE="${PROJECT_DIR}/SYNC_REPORT.md"
+log_info "生成同步报告: $REPORT_FILE"
+
+{
+    generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" "$IMAGE_FILE"
+} > "$REPORT_FILE" 2>/dev/null || true
+
+log_info "报告已生成"
 
 # 清理临时文件
 rm -f "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST"
@@ -198,3 +182,4 @@ rm -f "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST"
 # 返回退出码
 [[ $FAILED_COUNT -gt 0 ]] && exit 1
 exit 0
+
