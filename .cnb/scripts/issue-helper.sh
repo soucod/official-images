@@ -144,14 +144,21 @@ issue_update() {
     fi
     
     # CNB API 格式
-    curl -s -X PATCH \
+    local response http_code
+    response=$(curl -s -w "\n%{http_code}" -X PATCH \
         "${CNB_API_URL}/${CNB_REPO_SLUG}/issues/${iid}" \
         -H "Authorization: Bearer ${CNB_TOKEN}" \
         -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
         -d "{\"body\": \"${body}\"}" \
-        >/dev/null 2>&1 || true
+        2>/dev/null) || true
     
-    log_issue "Issue #$iid 已更新"
+    http_code=$(echo "$response" | tail -1)
+    if [[ "$http_code" =~ ^2 ]]; then
+        log_issue "✓ Issue #$iid 内容已更新"
+    else
+        log_issue "⚠️ Issue #$iid 更新失败 (HTTP $http_code)"
+    fi
 }
 
 # 关闭 Issue
@@ -164,14 +171,21 @@ issue_close() {
     fi
     
     # CNB API 格式
-    curl -s -X PATCH \
+    local response http_code
+    response=$(curl -s -w "\n%{http_code}" -X PATCH \
         "${CNB_API_URL}/${CNB_REPO_SLUG}/issues/${iid}" \
         -H "Authorization: Bearer ${CNB_TOKEN}" \
         -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
         -d '{"state": "closed"}' \
-        >/dev/null 2>&1 || true
+        2>/dev/null) || true
     
-    log_issue "Issue #$iid 已关闭"
+    http_code=$(echo "$response" | tail -1)
+    if [[ "$http_code" =~ ^2 ]]; then
+        log_issue "✓ Issue #$iid 已关闭"
+    else
+        log_issue "⚠️ Issue #$iid 关闭失败 (HTTP $http_code)"
+    fi
 }
 
 # 生成同步报告 Markdown
