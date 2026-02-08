@@ -3,26 +3,11 @@
 # 平台默认 docker.io，标签默认 latest
 # 以 # 开头的行为注释
 
-# === Docker Official Images ===
-docker:27
-openjdk:25
-maven:3
-maven:3.9.9
-nginx:latest
-alpine:latest
-busybox:latest
-
-# === GitHub Container Registry ===
-ghcr.io/graalvm/graalvm-ce:ol9-java11-22.3.3
-ghcr.io/graalvm/graalvm-community:21
-
-# === 添加更多镜像 ===
-# redis:7
-# postgres:16
-# mysql:8.0
-
 
 nacos/nacos-server:latest
+nacos/nacos-server:3
+nacos/nacos-server:2
+nacos/nacos-server:1
 nacos/nacos-server:v3.1.0
 nacos/nacos-server:v3.0.3
 nacos/nacos-server:v3.0.2
@@ -39,49 +24,57 @@ v2fly/v2fly-core:v5.16.1
 v2fly/v2fly-core:v5.15.1
 v2fly/v2fly-core:v5.14.1
 
+
+ghcr.io/graalvm/graalvm-ce:25
+ghcr.io/graalvm/graalvm-ce:21
+ghcr.io/graalvm/graalvm-ce:17
+ghcr.io/graalvm/graalvm-ce:11
+ghcr.io/graalvm/graalvm-ce:8
 ghcr.io/graalvm/graalvm-ce:22.3.3
 ghcr.io/graalvm/graalvm-ce:21.3.2
 ghcr.io/graalvm/graalvm-ce:20.3.6
-
-ghcr.io/graalvm/graalvm-ce:ol9-java17-22.3.3
-ghcr.io/graalvm/graalvm-ce:ol9-java11-22.3.3
-ghcr.io/graalvm/graalvm-ce:ol8-java17-22.3.3
-ghcr.io/graalvm/graalvm-ce:ol8-java11-22.3.3
 ghcr.io/graalvm/graalvm-ce:ol7-java17-22.3.3
-
-
+ghcr.io/graalvm/graalvm-ce:ol8-java11-22.3.3
+ghcr.io/graalvm/graalvm-ce:ol9-java11-22.3.3
+ghcr.io/graalvm/graalvm-ce:ol10-java25
+ghcr.io/graalvm/graalvm-ce:ol10-java21
+ghcr.io/graalvm/graalvm-ce:ol10-java17
+ghcr.io/graalvm/graalvm-ce:ol10-java11
+ghcr.io/graalvm/graalvm-ce:ol10-java8
+ghcr.io/graalvm/graalvm-ce:ol9-java25
+ghcr.io/graalvm/graalvm-ce:ol9-java21
+ghcr.io/graalvm/graalvm-ce:ol9-java17
+ghcr.io/graalvm/graalvm-ce:ol9-java11
+ghcr.io/graalvm/graalvm-ce:ol9-java8
+ghcr.io/graalvm/graalvm-ce:ol8-java25
+ghcr.io/graalvm/graalvm-ce:ol8-java21
+ghcr.io/graalvm/graalvm-ce:ol8-java17
+ghcr.io/graalvm/graalvm-ce:ol8-java11
+ghcr.io/graalvm/graalvm-ce:ol8-java8
+ghcr.io/graalvm/graalvm-community:25
 ghcr.io/graalvm/graalvm-community:21
 ghcr.io/graalvm/graalvm-community:17
-
-ghcr.io/graalvm/jdk-community:21
-ghcr.io/graalvm/jdk-community:17
+ghcr.io/graalvm/graalvm-community:11
+ghcr.io/graalvm/graalvm-community:8
+ghcr.io/graalvm/graalvm-community:7
 
 
 jeessy/ddns-go:latest
 jeessy/ddns-go:v6.6.7
 
-#ollama/ollama:latest
+ollama/ollama:latest
 ollama/ollama:0.3.3-rocm
 ollama/ollama:0.3.3
 
-ghcr.io/graalvm/graalvm-ce:22.3.3
-ghcr.io/graalvm/graalvm-ce:21.3.2
-ghcr.io/graalvm/graalvm-ce:20.3.6
-
-
-ghcr.io/graalvm/graalvm-ce:ol7-java17-22.3.3
-ghcr.io/graalvm/graalvm-ce:ol8-java11-22.3.3
-ghcr.io/graalvm/graalvm-ce:ol9-java11-22.3.3
-
-ghcr.io/graalvm/graalvm-community:21
-
 
 apache/rocketmq:latest
+apache/rocketmq:5
 apache/rocketmq:5.3.0
 apache/rocketmq:5.2.0
 apache/rocketmq:5.1.4
 apache/rocketmq:5.0.0
 
+apache/rocketmq:4
 apache/rocketmq:4.9.7
 apache/rocketmq:4.9.6
 apache/rocketmq:4.8.0
@@ -97,23 +90,74 @@ apacherocketmq/rocketmq-dashboard:2.0.0
 apacherocketmq/rocketmq-dashboard:1.0.0
 
 alpine:latest
+alpine:edge
+alpine:3
+alpine:3.23.3
+alpine:3.23
+alpine:3.22.3
+alpine:3.22
+alpine:3.21.6
+alpine:3.21
+alpine:3.20.9
+alpine:3.20
+alpine:3.19
+alpine:3.19.9
+alpine:2
+alpine:20260127
+
 archlinux:latest
 archlinux:base
+archlinux:base-20260201.0.486523
 archlinux:base-devel
+archlinux:base-20260201.0.486523
 archlinux:base-devel-20231112.0.191179
+archlinux:base-devel-20260201.0.486523
+archlinux:multilib-devel
 archlinux:multilib-devel-20240101.0.204074
+archlinux:multilib-devel-20260201.0.486523
+
+
 bash:latest
+
+centos:latest
+centos:10
+centos:9
 centos:8
 centos:7
 centos:6
 centos:5
+centos:4
+centos:3
+centos:2
+centos:1
+centos:centos8.4.2105
+centos:centos7.9.2009
+centos:centos6.10
+centos:6.10
+
+
+
+
 consul:1.15.4
 consul:1.14.8
 consul:1.13.9
 consul:1.12.9
 
 
-debian
+debian:latest
+debian:13
+debian:12
+debian:11
+debian:10
+debian:9
+debian:8
+debian:7
+debian:6
+debian:5
+debian:4
+debian:3
+debian:2
+debian:1
 debian:unstable
 debian:unstable-slim
 debian:trixie-slim
@@ -124,15 +168,53 @@ debian:testing
 debian:stable-backports
 debian:stable
 
-docker
+docker:latest
 docker:cli
+docker:30
+docker:29
+docker:28
 docker:27
+docker:26
+docker:25
+docker:24
+docker:23
+docker:22
+docker:21
+docker:20
+docker:19
+docker:18
+docker:17
+docker:16
+docker:15
+docker:14
+docker:13
+docker:12
+docker:11
+docker:10
+docker:9
+docker:8
+docker:7
+docker:6
+docker:5
+docker:4
+docker:3
+docker:2
+docker:1
 docker:dind
 docker:dind-rootless
 docker:27.0.1-dind-rootless
 
 
 eclipse-temurin:latest
+eclipse-temurin:25
+eclipse-temurin:25-jdk
+eclipse-temurin:25.0.1_8-jre-alpine
+eclipse-temurin:25.0.1_8-jdk-alpine
+eclipse-temurin:25-jre-alpine
+eclipse-temurin:25-jdk-alpine
+eclipse-temurin:25-alpine
+eclipse-temurin:25-jre
+
 
 
 eclipse-temurin:22
@@ -145,14 +227,30 @@ eclipse-temurin:22-alpine
 eclipse-temurin:22-jre
 eclipse-temurin:21
 eclipse-temurin:21-jdk
+eclipse-temurin:21-jre-alpine
+eclipse-temurin:21-jdk-alpine
+eclipse-temurin:21-alpine
+eclipse-temurin:21-jdk
 eclipse-temurin:21-jre
 eclipse-temurin:17
+eclipse-temurin:17-jdk
+eclipse-temurin:17-jre-alpine
+eclipse-temurin:17-jdk-alpine
+eclipse-temurin:17-alpine
 eclipse-temurin:17-jdk
 eclipse-temurin:17-jre
 eclipse-temurin:11
 eclipse-temurin:11-jdk
+eclipse-temurin:11-jre-alpine
+eclipse-temurin:11-jdk-alpine
+eclipse-temurin:11-alpine
+eclipse-temurin:11-jdk
 eclipse-temurin:11-jre
 eclipse-temurin:8
+eclipse-temurin:8-jdk
+eclipse-temurin:8-jre-alpine
+eclipse-temurin:8-jdk-alpine
+eclipse-temurin:8-alpine
 eclipse-temurin:8-jdk
 eclipse-temurin:8-jre
 
@@ -186,8 +284,8 @@ eclipse-temurin:8-jdk-alpine
 eclipse-temurin:8-alpine
 
 
-
-
+elasticsearch:latest
+elasticsearch:8
 elasticsearch:8.14.1
 elasticsearch:8.13.4
 elasticsearch:8.12.2
@@ -208,37 +306,7 @@ golang:1.22.4
 golang:1.21.11
 golang:1.20.14
 
-
-gitlab/gitlab-ee:latest
-gitlab/gitlab-ee:17.5.0-ee.0
-gitlab/gitlab-ee:17.4.2-ee.0
-gitlab/gitlab-ee:17.3.5-ee.0
-gitlab/gitlab-ee:17.2.9-ee.0
-gitlab/gitlab-ee:16.11.10-ee.0
-gitlab/gitlab-ee:16.10.10-ee.0
-gitlab/gitlab-ee:16.9.11-ee.0
-gitlab/gitlab-ee:16.0.10-ee.0
-gitlab/gitlab-ee:15.11.13-ee.0
-gitlab/gitlab-ee:15.11.12-ee.0
-
-gitlab/gitlab-ce:latest
-gitlab/gitlab-ce:17.5.0-ce.0
-gitlab/gitlab-ce:17.4.2-ce.0
-gitlab/gitlab-ce:17.3.5-ce.0
-gitlab/gitlab-ce:16.11.10-ce.0
-gitlab/gitlab-ce:16.10.10-ce.0
-gitlab/gitlab-ce:16.9.11-ce.0
-gitlab/gitlab-ce:16.8.10-ce.0
-
-gitlab/gitlab-runner:latest
-gitlab/gitlab-runner:v17.5.2
-gitlab/gitlab-runner:v17.4.2
-gitlab/gitlab-runner:v17.3.3
-gitlab/gitlab-runner:ubuntu-v17.3.3
-gitlab/gitlab-runner:ubuntu-v17.5.2
-gitlab/gitlab-runner:ubuntu-v17.4.2
-gitlab/gitlab-runner:ubuntu-v17.3.3
-
+solr:latest
 solr:9.6.1
 solr:9.6.1-slim
 
@@ -246,6 +314,7 @@ gitea/act_runner:latest
 gitea/act_runner:0.2.11
 gitea/act_runner:0.2.10
 
+springci/spring-boot-ci:latest
 springci/spring-boot-ci:3.3.x
 springci/spring-boot-ci:3.2.x
 springci/spring-boot-ci:3.1.x
@@ -257,7 +326,7 @@ springci/spring-boot-ci:2.4.x
 springci/spring-boot-ci:2.3.x
 springci/spring-boot-ci:2.2.x
 
-
+swift:latest
 swift:amazonlinux2
 swift:amazonlinux2-slim
 swift:5.9.2-amazonlinux2-slim
@@ -265,20 +334,23 @@ swift:5.9.2-amazonlinux2
 
 
 
-
+grafana/grafana:latest
 grafana/grafana
-gradle
-gradle:jdk22
+
+
+gradle:latest
+gradle:alpine
+gradle:jdk25
 gradle:jdk21
 gradle:jdk17
 gradle:jdk11
+gradle:jdk8
 gradle:jdk22-alpine
 gradle:jdk21-alpine
 gradle:jdk17-alpine
 gradle:jdk11-alpine
 gradle:jdk-lts-and-current-alpine
 gradle:jdk-alpine
-gradle:alpine
 gradle:8.8.0-jdk21-alpine
 gradle:8.8.0-jdk17-alpine
 gradle:8.8.0-jdk11-alpine
@@ -299,7 +371,7 @@ gradle:6.9.4-jdk8
 
 hello-world:latest
 
-httpd
+httpd:latest
 httpd:2
 httpd:2-alpine
 
@@ -308,6 +380,7 @@ httpd:2-alpine
 
 
 jenkins/jenkins:latest
+jenkins/jenkins:lts-jdk25
 jenkins/jenkins:lts-jdk21
 jenkins/jenkins:lts-jdk17
 jenkins/jenkins:lts-jdk11
@@ -324,7 +397,7 @@ jenkins/jenkins:2.464-jdk17
 jenkins/jenkins:jdk17
 
 
-
+jetbrains/graalvm-debugger:25
 jetbrains/graalvm-debugger:21
 jetbrains/graalvm-debugger:21-26
 jetbrains/graalvm-debugger:21-arm64
@@ -334,15 +407,25 @@ jetbrains/graalvm-debugger:17-27
 jetbrains/graalvm-debugger:17-arm64
 jetbrains/graalvm-debugger:17-amd64
 
-
+jetty:12
 jetty:12.0.9-jdk21-alpine
 jetty:11-jdk21-alpine
+jetty:11
 jetty:10.0.20-jdk21-alpine
 jetty:10.0-jdk21-alpine
+jetty:10
 jetty:10-jdk21-alpine
 jetty:9-jdk21-alpine
+jetty:9
 jetty:9.4.54-jdk21-alpine
+jetty:8
 
+
+
+fedora:45
+fedora:44
+fedora:43
+fedora:42
 fedora:41
 fedora:40
 fedora:39
@@ -364,10 +447,12 @@ fedora:25
 fedora:24
 fedora:23
 fedora:22
+fedora:21
 
 
-redis
+redis:latest
 redis:alpine
+redis:8
 redis:7.0
 redis:7
 redis:6
@@ -381,12 +466,17 @@ registry:2.8.3
 registry:2.8.2
 
 
-openjdk
+openjdk:latest
+openjdk:27
+openjdk:26
+openjdk:25
+openjdk:25-oraclelinux10
+openjdk:25-oraclelinux9
+openjdk:25-oraclelinux8
+openjdk:25-jdk
+openjdk:25-oracle
+openjdk:25
 openjdk:24
-openjdk:24-oraclelinux9
-openjdk:24-jdk
-openjdk:24-oracle
-
 openjdk:23
 openjdk:22
 openjdk:21
@@ -440,6 +530,8 @@ openjdk:7u221-jre
 openjdk:7
 openjdk:6
 
+oraclelinux:latest
+oraclelinux:10
 oraclelinux:9
 oraclelinux:8
 oraclelinux:8.9
@@ -460,7 +552,10 @@ oraclelinux:6.8
 oraclelinux:5.11
 
 
-python
+python:latest
+python:3.15
+python:3.14
+python:3.13
 python:3.12.4
 python:3.11.9
 python:3.10.14
@@ -470,7 +565,9 @@ python:2.7.17
 python:2.7.16
 
 
-postgres:17beta1
+postgres:latest
+postgres:18
+postgres:17
 postgres:16.3
 postgres:15.7
 postgres:14.12
@@ -479,15 +576,24 @@ postgres:12.19
 
 
 
-
+maven:latest
 maven:sapmachine
+maven:4
 maven:3.9.7
 maven:3
 maven:3.9
 maven:3.8
-#maven:3.7
-#maven:3.6
+maven:3.7
+maven:3.6
+maven:3.5
+maven:3.4
+maven:3.3
+maven:3.2
+maven:3.1
+maven:3.0
+maven:2
 
+nextcloud:latest
 nextcloud:apache
 nextcloud:29.0
 nextcloud:29
@@ -502,13 +608,14 @@ nacos/nacos-server:v1.4.8
 
 
 
-nginx
+nginx:latest
 nginx:alpine
 nginx:stable
 nginx:stable-alpine
 nginx:stable-perl
 nginx:stable-otel
 nginx:stable-alpine3.19
+nginx:1.28
 nginx:1.27
 nginx:1.26
 nginx:1.25
@@ -523,8 +630,17 @@ nginx:1.17
 nginx:1.16
 nginx:1.15
 
+node:latest
 node:lts
 node:lts-alpine
+node:25
+node:25-alpine
+node:24
+node:24-alpine
+node:23
+node:23-alpine
+node:22
+node:22-alpine
 node:21
 node:20
 node:20-alpine
@@ -539,7 +655,7 @@ node:14
 node:14-alpine
 node:12
 
-mariadb
+mariadb:latest
 mariadb:noble
 mariadb:lts-noble
 mariadb:11.2.4
@@ -550,10 +666,14 @@ metagpt/metagpt:latest
 
 
 mysql:latest
+mysql:oraclelinux10
 mysql:oraclelinux9
 mysql:lts
+mysql:9
 mysql:8
 mysql:8.4
+mysql:8.0.39
+mysql:8.0.38
 mysql:8.0.37
 mysql:8.0.36
 mysql:8.0.35
@@ -563,7 +683,7 @@ mysql:5.7.23
 mysql:5.7.22
 mysql:5.7.21
 mysql:5.7.20
-mongo
+mongo:latest
 mongo:8.0.0-rc9
 mongo:7
 mongo:7.0.12
@@ -575,14 +695,21 @@ mongodb/mongodb-community-server:6.0.5-ubi8
 
 ubuntu:rolling
 ubuntu:latest
+ubuntu:10.04
+ubuntu:12.04
+ubuntu:14.04
+ubuntu:16.04
+ubuntu:18.04
 ubuntu:20.04
 ubuntu:22.04
 ubuntu:23.10
 ubuntu:24.04
 ubuntu:24.10
+ubuntu:25.04
+ubuntu:26.04
 
 
-rabbitmq
+rabbitmq:latest
 rabbitmq:alpine
 rabbitmq:3-alpine
 rabbitmq:3
@@ -590,492 +717,48 @@ rabbitmq:management-alpine
 rabbitmq:management
 rabbitmq:3-management
 
-ruby
+ruby:latest
 ruby:3.3.3-alpine
 ruby:3
 ruby:2
 
 
+rockylinux:latest
+rockylinux:10
+rockylinux:10-minimal
 rockylinux:9
 rockylinux:9.3
 rockylinux:9.3.20231119-minimal
 rockylinux:9.3.20231119
 rockylinux:9.3-minimal
 rockylinux:8.9
+rockylinux:8
 
 
-traefik
+traefik:latest
 
+tomee:latest
+tomee:11
+tomee:10
 tomee:10.0-jre11-Semeru
 tomee:10.0-jre17-Semeru
-
+tomee:9
 tomee:9.1.3-Semeru-webprofile
 tomee:9.1.3-Semeru-plus
+tomee:8
+tomee:8.5
 
 
-tomcat:latest
-tomcat:11.0.0
-tomcat:10.1.26-jre17
-
-tomcat:9
-tomcat:8.5
-tomcat:8
-tomcat:7
-tomcat:6
-tomcat:jre21
-tomcat:jre17
-tomcat:jre11
-tomcat:jdk21
-tomcat:jdk17
-tomcat:jdk11
-wordpress:latest
-#wordpress:fpm-alpine
-#wordpress:fpm
-
-
-#支持私库
-#k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.0.0
-#xhofe/alist:latest
-#支持指定架构
---platform=linux/arm64 linux/amd64 linux/arm64/v8 windows/amd64
-
-
-
-
-#--platform=windows/amd64 hello-world:latest 
-
-#--platform=windows/amd64 openjdk:21-jdk 
-#--platform=windows/amd64 openjdk:17-jdk 
-#--platform=windows/amd64 openjdk:11-jdk 
-
-alpine
-bash
-centos:8
-centos:7
-centos:6
-centos:5
-consul:1.15.4
-consul:1.14.8
-consul:1.13.9
-consul:1.12.9
-
-eclipse-temurin:latest
-
-
-eclipse-temurin:22
-eclipse-temurin:22-jdk
-eclipse-temurin:22.0.1_8-jre-alpine
-eclipse-temurin:22.0.1_8-jdk-alpine
-eclipse-temurin:22-jre-alpine
-eclipse-temurin:22-jdk-alpine
-eclipse-temurin:22-alpine
-
-
-
-
-eclipse-temurin:21
-eclipse-temurin:21-jdk-alpine
-eclipse-temurin:21-alpine
-eclipse-temurin:21.0.3_9-jre-alpine
-eclipse-temurin:21.0.3_9-jdk-alpine
-eclipse-temurin:21-jre-alpine
-
-eclipse-temurin:17
-eclipse-temurin:17.0.11_9-jre-alpine
-eclipse-temurin:17.0.11_9-jdk-alpine
-eclipse-temurin:17-jre-alpine
-eclipse-temurin:17-jdk-alpine
-eclipse-temurin:17-alpine
-
-eclipse-temurin:11
-eclipse-temurin:11.0.23_9-jre-alpine
-eclipse-temurin:11-jre-alpine
-eclipse-temurin:11-jdk-alpine
-eclipse-temurin:11-alpine
-
-
-eclipse-temurin:8
-eclipse-temurin:8-jdk
-eclipse-temurin:8-jdk-nanoserver
-
-
-eclipse-temurin:8u412-b08-jdk-alpine
-eclipse-temurin:8u412-b08-jre
-eclipse-temurin:8u412-b08-jdk
-
-
-#eclipse-temurin:8u412-b08-jre-windowsservercore-ltsc2022
-eclipse-temurin:8u412-b08-jre-alpine
-eclipse-temurin:8u412-b08-jdk-alpine
-eclipse-temurin:8-jre-alpine
-eclipse-temurin:8-jdk-alpine
-eclipse-temurin:8-alpine
-
-
-
-
-
-elasticsearch
-elasticsearch:8
-elasticsearch:8.14.1
-elasticsearch:8.13.4
-elasticsearch:8.12.2
-elasticsearch:7
-elasticsearch:7.17
-elasticsearch:7.17.22
-elasticsearch:7.16
-elasticsearch:7.15
-elasticsearch:6.8
-elasticsearch:6.8.23
-elasticsearch:6.8.22
-elasticsearch:6.8.21
-elasticsearch:6.7
-elasticsearch:6.6
-elasticsearch:5.6.16
-elasticsearch:5.6.15
-elasticsearch:5.6
-elasticsearch:5.5
-
-debian
-debian:unstable
-debian:unstable-slim
-debian:trixie-slim
-debian:trixie-backports
-debian:trixie
-debian:stable-slim
-debian:testing
-debian:stable-backports
-debian:stable
-
-docker
-docker:cli
-docker:27
-docker:dind
-docker:dind-rootless
-#docker:windowsservercore-ltsc2022
-docker:27.0.1-dind-rootless
-docker:windowsservercore
-
-
-#golang:nanoserver
-golang:latest
-golang:1.23
-golang:1.22
-golang:1.21
-golang:1.20
-golang:1.19
-golang:1.18
-golang:1.17
-golang:1.16
-golang:1.15
-
-
-springci/spring-boot-ci:3.3.x
-springci/spring-boot-ci:3.2.x
-springci/spring-boot-ci:3.1.x
-springci/spring-boot-ci:3.0.x
-springci/spring-boot-ci:2.7.x
-springci/spring-boot-ci:2.6.x
-springci/spring-boot-ci:2.5.x
-springci/spring-boot-ci:2.4.x
-springci/spring-boot-ci:2.3.x
-springci/spring-boot-ci:2.2.x
-
-
-
-grafana/grafana
-gradle
-gradle:jdk22
-gradle:jdk21
-gradle:jdk17
-gradle:jdk11
-gradle:jdk22-alpin
-gradle:jdk21-alpin
-gradle:jdk17-alpin
-gradle:jdk11-alpin
-gradle:jdk-lts-and-current-alpine
-gradle:jdk-alpine
-gradle:alpine
-gradle:8.8.0-jdk21-alpin
-gradle:8.8.0-jdk17-alpine
-gradle:8.8.0-jdk11-alpine
-gradle:8.8.0-jdk-lts-and-current-alpine
-gradle:8.8.0-jdk-alpine
-
-
-#hello-world:nanoserver-ltsc2022
-hello-world:nanoserver
-hello-world:latest
-hello-world:linux
-
-httpd
-httpd:2
-httpd:2-alpine
-
-
-
-
-
-jenkins/jenkins:latest
-jenkins/jenkins:latest-jdk17
-jenkins/jenkins:lts-jdk17
-jenkins/jenkins:2.452.2-lts
-jenkins/jenkins:2.452.2-lts-jdk21
-jenkins/jenkins:2.452.2-lts-jdk17
-jenkins/jenkins:2.452.2-lts-jdk11
-jenkins/jenkins:2.464
-jenkins/jenkins:latest-jdk21
-jenkins/jenkins:2.464-jdk21
-jenkins/jenkins:2.464-jdk17
-jenkins/jenkins:jdk17
-#jenkins/jenkins:2.464-windowsservercore-ltsc2019
-jenkins/#jenkins:jdk17-hotspot-windowsservercore-ltsc2019
-jenkins/#jenkins:2.464-jdk17-hotspot-windowsservercore-ltsc2019
-
-
-
-jetbrains/graalvm-debugger:21
-jetbrains/graalvm-debugger:17
-jetbrains/graalvm-debugger:11
-jetbrains/graalvm-debugger:17-arm64
-jetbrains/graalvm-debugger:17-amd64
-
-
-fedora:41
-fedora:40
-fedora:39
-fedora:38
-fedora:37
-fedora:36
-fedora:35
-fedora:34
-fedora:33
-fedora:33
-fedora:32
-fedora:31
-fedora:30
-fedora:29
-fedora:28
-fedora:27
-fedora:26
-fedora:25
-fedora:24
-fedora:23
-fedora:22
-
-
-redis
-redis:alpine
-redis:7.0
-redis:7
-redis:6
-redis:5
-redis:4
-redis:3
-redis:2
-registry:latest
-registry:3
-registry:2
-
-
-openjdk
-openjdk:24
-openjdk:23
-openjdk:22
-openjdk:21
-openjdk:21-oraclelinux8
-openjdk:21-oraclelinux9
-openjdk:21-oracle
-openjdk:21-jdk-oracle
-openjdk:21-jdk-oraclelinux8
-openjdk:21-jdk-oraclelinux9
-openjdk:21-jdk-oraclelinux7
-openjdk:21-jdk
-openjdk:21-jdk-bullseye
-openjdk:21-jdk-slim-bookworm
-openjdk:21-jdk-bookworm
-openjdk:21-bullsey
-openjdk:21-bookwor
-openjdk:21-jdk-slim
-openjdk:21-nanoserver
-#openjdk:21-jdk-windowsservercore-ltsc2022
-
-openjdk:20
-openjdk:19
-openjdk:18
-openjdk:17
-openjdk:17-jdk-alpine3.14
-openjdk:17-jdk-alpine
-openjdk:17-jdk
-openjdk:17-jdk-oraclelinux8
-openjdk:17-jdk-oracle
-openjdk:16
-openjdk:15
-openjdk:14
-openjdk:13
-openjdk:12
-openjdk:11
-openjdk:11.0.16
-openjdk:11.0.16-jdk
-openjdk:11.0.16-jre
-openjdk:10
-openjdk:10.0.2
-openjdk:10.0.2-jdk --platform=linux/386 linux/amd64 linux/arm/v5 linux/arm/v7 linux/arm64/v8 linux/ppc64le linux/s390x
-openjdk:10.0.2-jre
-openjdk:9
-openjdk:9.0.4-jdk
-openjdk:9.0.4-12
-openjdk:9.0.4-12-jdk --platform=linux/386 linux/amd64 linux/arm/v5 linux/arm/v7 linux/arm64/v8 linux/ppc64le linux/s390x
-openjdk:9.0.4-12-jre
-openjdk:9.0.4-nanoserver
-openjdk:9.0.4-windowsservercore --platform=windows/amd64 windows/amd64
-openjdk:8
-openjdk:8u342
-openjdk:8u342-jdk
-openjdk:8u342-jre
-openjdk:7u221
-openjdk:7u221-jdk
-openjdk:7u221-jre
-openjdk:7
-openjdk:6
-
-oraclelinux:9
-oraclelinux:8
-oraclelinux:8.9
-oraclelinux:8.8
-oraclelinux:8.7
-oraclelinux:8.6
-oraclelinux:8.5
-oraclelinux:8.0
-oraclelinux:7
-oraclelinux:7.9
-oraclelinux:7.8
-oraclelinux:7.7
-oraclelinux:7.0
-oraclelinux:6
-oraclelinux:6.10
-oraclelinux:6.9
-oraclelinux:6.8
-oraclelinux:6.0
-oraclelinux:5
-oraclelinux:5.11
-oraclelinux:5.10
-
-
-python
-python:3.11
-python:2.7.18
-
-
-maven:sapmachine
-maven:3.9.7
-maven:3
-maven:2
-maven:3.9
-maven:3.8
-maven:3.7
-maven:3.6
-nextcloud:apache
-nextcloud:29.0
-nextcloud:29
-nginx
-nginx:alpine
-nginx:stable
-nginx:stable-alpine
-nginx:stable-per
-nginx:stable-otel
-nginx:stable-alpine3.19
-nginx:1.27
-nginx:1.26
-nginx:1.25
-nginx:1.24
-nginx:1.23
-nginx:1.22
-nginx:1.21
-nginx:1.20
-nginx:1.19
-nginx:1.18
-nginx:1.17
-nginx:1.16
-nginx:1.15
-node:lts
-node:lts-alpine
-node:21
-node:20
-node:20-alpine
-node:20.15.0-alpine
-node:20.15.0
-node:18
-node:18-alpine
-node:18-buster
-node:16
-node:16-alpine
-node:14
-node:14-alpine
-node:12
-memcached
-memcached:alpine
-memcached:alpine3.20
-memcached:1.6.28-alpine3.20
-memcached:1-alpine
-memcached:1.6.27
-memcached:1.5
-memcached:bookworm
-
-mariadb
-mariadb:nobl
-mariadb:lts-noble
-mariadb:lts
-mysql:latest
-mysql:oraclelinux9
-mysql:lts
-mysql:8
-mysql:8.4
-mysql:8.0.37
-mysql:8.0.36
-mysql:8.0.35
-mysql:5.7.25
-mysql:5.7.24
-mysql:5.7.23
-mysql:5.7.22
-mysql:5.7.21
-mysql:5.7.20
-mongo
-mongo:7
-mongo:7.0.11-nanoserver
-mongo:6
-ubuntu:rolling
-ubuntu:latest
-ubuntu:20.04
-ubuntu:22.04
-ubuntu:23.10
-ubuntu:24.04
-ubuntu:24.10
-
-
-rabbitmq
-rabbitmq:alpin
-rabbitmq:3-alpine
-rabbitmq:3
-
-rabbitmq:management-alpin
-rabbitmq:management
-rabbitmq:3-management
-ruby
-ruby:3.3.3-alpine
-ruby:3
-ruby:2
-
-traefik
 tomcat:latest
 tomcat:11
+tomcat:11.0.0
+tomcat:10.1.26-jre17
 tomcat:10
 tomcat:9
 tomcat:8.5
 tomcat:8
 tomcat:7
 tomcat:6
-tomcat:jre21-temurin-jamm
 tomcat:jre21
 tomcat:jre17
 tomcat:jre11
@@ -1086,10 +769,4 @@ wordpress:latest
 wordpress:fpm-alpine
 wordpress:fpm
 
-
-#支持私库
-#k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.0.0
-#xhofe/alist:latest
-#支持指定架构
---platform=linux/arm64 linux/amd64 	linux/arm64/v8 windows/amd64 windows/amd64
 

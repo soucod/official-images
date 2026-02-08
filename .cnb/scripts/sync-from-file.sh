@@ -42,7 +42,7 @@ ARCH="amd64"
 PARALLEL=3
 DRY_RUN=false
 SKIP_EXISTING=false
-CREATE_ISSUE=false
+CREATE_ISSUE=true
 
 # 同步结果文件
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
