@@ -65,8 +65,15 @@ issue_create() {
     
     log_issue "响应码: $http_code"
     
+    # 解析 Issue ID (支持数字和字符串格式)
+    # CNB 返回格式: "number":"1" 或 "iid":1
     iid=$(echo "$body_response" | grep -oE '"iid"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
     if [[ -z "$iid" ]]; then
+        # CNB 格式: "number":"1" (字符串)
+        iid=$(echo "$body_response" | grep -oE '"number"\s*:\s*"[0-9]+"' | head -1 | grep -oE '[0-9]+' || echo "")
+    fi
+    if [[ -z "$iid" ]]; then
+        # 备选: "number":1 (数字)
         iid=$(echo "$body_response" | grep -oE '"number"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
     fi
     if [[ -z "$iid" ]]; then
