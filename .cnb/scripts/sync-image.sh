@@ -211,18 +211,60 @@ main() {
         sync_with_docker "$source_image" "$target_image"
     fi
 
+    # 同步成功，更新缓存
+    update_sync_cache "$target_image"
+    
     log_info "✓ 同步完成: $target_image"
 }
 
 # 检查目标镜像是否已存在
+# 优化方案：本地缓存 + Registry HEAD 请求（避免下载统计）
 check_image_exists() {
     local target="$1"
+    local cache_file="${PROJECT_DIR}/.sync-cache.txt"
     
-    # 使用 docker manifest inspect 检查镜像是否存在
-    if docker manifest inspect "$target" >/dev/null 2>&1; then
-        return 0  # 存在
+    # 1. 本地缓存检查 (零网络请求)
+    if [[ -f "$cache_file" ]] && grep -qF "$target" "$cache_file" 2>/dev/null; then
+        log_info "[缓存] 镜像已存在: $target"
+        return 0
     fi
+    
+    # 2. Registry HEAD 请求 (最轻量，仅获取 headers)
+    # 从 target 解析出 registry/repo:tag
+    local registry="${target%%/*}"
+    local repo_tag="${target#*/}"
+    local repo="${repo_tag%:*}"
+    local tag="${repo_tag##*:}"
+    
+    local head_response
+    head_response=$(curl -sI -o /dev/null -w "%{http_code}" \
+        "https://${registry}/v2/${repo}/manifests/${tag}" \
+        -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+        -H "Authorization: Bearer ${CNB_TOKEN:-}" \
+        2>/dev/null) || head_response="000"
+    
+    if [[ "$head_response" == "200" ]]; then
+        log_info "[HEAD] 镜像已存在: $target"
+        # 更新缓存
+        echo "$target" >> "$cache_file" 2>/dev/null || true
+        return 0
+    fi
+    
+    # 3. fallback: docker manifest inspect
+    if docker manifest inspect "$target" >/dev/null 2>&1; then
+        log_info "[manifest] 镜像已存在: $target"
+        echo "$target" >> "$cache_file" 2>/dev/null || true
+        return 0
+    fi
+    
     return 1  # 不存在
+}
+
+# 更新缓存（同步成功后调用）
+update_sync_cache() {
+    local target="$1"
+    local cache_file="${PROJECT_DIR}/.sync-cache.txt"
+    echo "$target" >> "$cache_file" 2>/dev/null || true
 }
 
 # 使用 skopeo 同步 (推荐，无需本地存储)
