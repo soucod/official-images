@@ -4,14 +4,12 @@
 # 用法:
 #   bash sync-from-file.sh [文件路径] [选项]
 #
-# 注意: 必须使用 bash 运行此脚本
-#
 # 选项:
 #   --arch ARCH        架构 (默认: amd64)
 #   --parallel N       并行数量 (默认: 3)
 #   --skip-existing    跳过已存在的镜像
 #   --dry-run          仅打印，不执行
-#   --create-issue     创建 Issue 记录同步结果
+#   --create-issue     创建 Issue 记录结果
 
 set -euo pipefail
 
@@ -22,6 +20,9 @@ else
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 fi
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+
+# 加载 Issue 助手
+source "${SCRIPT_DIR}/issue-helper.sh" 2>/dev/null || true
 
 # 颜色输出
 RED='\033[0;31m'
@@ -44,16 +45,15 @@ SKIP_EXISTING=false
 CREATE_ISSUE=false
 
 # 同步结果文件
-RESULT_FILE="/tmp/sync-result-$$.txt"
-SUCCESS_LIST="/tmp/sync-success-$$.txt"
-FAILED_LIST="/tmp/sync-failed-$$.txt"
-SKIPPED_LIST="/tmp/sync-skipped-$$.txt"
+TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
+SUCCESS_LIST="/tmp/sync-success-${TIMESTAMP}.txt"
+FAILED_LIST="/tmp/sync-failed-${TIMESTAMP}.txt"
+SKIPPED_LIST="/tmp/sync-skipped-${TIMESTAMP}.txt"
+START_TIME=$(date '+%Y-%m-%d %H:%M:%S')
 
 usage() {
     cat << EOF
 用法: bash $0 [文件路径] [选项]
-
-从文件批量同步 Docker 镜像到 CNB 仓库
 
 选项:
   --arch ARCH        架构 (默认: amd64)
@@ -70,50 +70,26 @@ EOF
 IMAGE_FILE=""
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --arch)
-            ARCH="$2"
-            shift 2
-            ;;
-        --parallel)
-            PARALLEL="$2"
-            shift 2
-            ;;
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
-        --skip-existing)
-            SKIP_EXISTING=true
-            shift
-            ;;
-        --create-issue)
-            CREATE_ISSUE=true
-            shift
-            ;;
-        -h|--help)
-            usage
-            ;;
-        -*)
-            log_error "未知选项: $1"
-            exit 1
-            ;;
-        *)
-            IMAGE_FILE="$1"
-            shift
-            ;;
+        --arch) ARCH="$2"; shift 2 ;;
+        --parallel) PARALLEL="$2"; shift 2 ;;
+        --dry-run) DRY_RUN=true; shift ;;
+        --skip-existing) SKIP_EXISTING=true; shift ;;
+        --create-issue) CREATE_ISSUE=true; shift ;;
+        -h|--help) usage ;;
+        -*) log_error "未知选项: $1"; exit 1 ;;
+        *) IMAGE_FILE="$1"; shift ;;
     esac
 done
 
-# 设置默认文件
 IMAGE_FILE="${IMAGE_FILE:-$DEFAULT_FILE}"
 
-# 检查文件是否存在
+# 检查文件
 if [[ ! -f "$IMAGE_FILE" ]]; then
     log_warn "镜像列表文件不存在: $IMAGE_FILE"
     exit 0
 fi
 
-# 提取有效镜像列表
+# 提取有效镜像
 IMAGES=$(tr -d '\r' < "$IMAGE_FILE" | grep -v '^#' | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 IMAGE_COUNT=$(echo "$IMAGES" | grep -c . || echo 0)
 
@@ -129,12 +105,8 @@ fi
 
 # 构建同步选项
 SYNC_OPTS="--arch $ARCH"
-if [[ "$DRY_RUN" == true ]]; then
-    SYNC_OPTS="$SYNC_OPTS --dry-run"
-fi
-if [[ "$SKIP_EXISTING" == true ]]; then
-    SYNC_OPTS="$SYNC_OPTS --skip-existing"
-fi
+[[ "$DRY_RUN" == true ]] && SYNC_OPTS="$SYNC_OPTS --dry-run"
+[[ "$SKIP_EXISTING" == true ]] && SYNC_OPTS="$SYNC_OPTS --skip-existing"
 
 log_info "========================================"
 log_info "批量同步 Docker 镜像到 CNB"
@@ -144,10 +116,18 @@ log_info "有效镜像: $IMAGE_COUNT 个"
 log_info "架构:     $ARCH"
 log_info "并行数:   $PARALLEL"
 log_info "跳过已存在: $SKIP_EXISTING"
-log_info "DRY-RUN:  $DRY_RUN"
+log_info "创建 Issue: $CREATE_ISSUE"
 log_info "========================================"
 
-# 同步单个镜像的函数
+# 创建 Issue (如果启用)
+ISSUE_IID=""
+if [[ "$CREATE_ISSUE" == true ]] && [[ "$DRY_RUN" != true ]]; then
+    ISSUE_TITLE="sync-artifact-${TIMESTAMP}"
+    ISSUE_BODY="## 🔄 镜像同步任务\\n\\n- **开始时间**: ${START_TIME}\\n- **架构**: ${ARCH}\\n- **镜像数量**: ${IMAGE_COUNT}\\n\\n⏳ 同步进行中..."
+    ISSUE_IID=$(issue_create "$ISSUE_TITLE" "$ISSUE_BODY" 2>/dev/null || echo "")
+fi
+
+# 同步单个镜像
 sync_single() {
     local image="$1"
     local idx="$2"
@@ -173,7 +153,7 @@ export -f sync_single log_info log_warn log_error log_step
 export SCRIPT_DIR SYNC_OPTS SUCCESS_LIST FAILED_LIST SKIPPED_LIST
 export GREEN YELLOW RED BLUE NC
 
-# 使用 xargs 并行执行
+# 并行执行
 idx=0
 echo "$IMAGES" | while read -r image; do
     idx=$((idx + 1))
@@ -181,9 +161,9 @@ echo "$IMAGES" | while read -r image; do
 done | xargs -P "$PARALLEL" -L 1 bash -c 'sync_single "$2" "$1"' _
 
 # 统计结果
-SUCCESS_COUNT=$(wc -l < "$SUCCESS_LIST" | tr -d ' ')
-FAILED_COUNT=$(wc -l < "$FAILED_LIST" | tr -d ' ')
-SKIPPED_COUNT=$(wc -l < "$SKIPPED_LIST" | tr -d ' ')
+SUCCESS_COUNT=$(wc -l < "$SUCCESS_LIST" 2>/dev/null | tr -d ' ' || echo 0)
+FAILED_COUNT=$(wc -l < "$FAILED_LIST" 2>/dev/null | tr -d ' ' || echo 0)
+SKIPPED_COUNT=$(wc -l < "$SKIPPED_LIST" 2>/dev/null | tr -d ' ' || echo 0)
 TOTAL=$((SUCCESS_COUNT + FAILED_COUNT + SKIPPED_COUNT))
 
 log_info "========================================"
@@ -195,35 +175,26 @@ log_info "跳过:   $SKIPPED_COUNT"
 log_info "失败:   $FAILED_COUNT"
 log_info "========================================"
 
-# 创建 Issue (如果启用)
-if [[ "$CREATE_ISSUE" == true ]] && [[ "$DRY_RUN" != true ]]; then
-    if command -v curl &>/dev/null && [[ -n "${CNB_TOKEN:-}" ]]; then
-        ISSUE_TITLE="🔄 镜像同步报告 - $(date '+%Y-%m-%d %H:%M')"
-        ISSUE_BODY="## 同步统计\n\n"
-        ISSUE_BODY+="| 状态 | 数量 |\n|------|------|\n"
-        ISSUE_BODY+="| ✅ 成功 | $SUCCESS_COUNT |\n"
-        ISSUE_BODY+="| ⊘ 跳过 | $SKIPPED_COUNT |\n"
-        ISSUE_BODY+="| ❌ 失败 | $FAILED_COUNT |\n\n"
-        
-        if [[ -s "$FAILED_LIST" ]]; then
-            ISSUE_BODY+="## ❌ 失败列表\n\n\`\`\`\n$(cat "$FAILED_LIST")\n\`\`\`\n\n"
-        fi
-        
-        if [[ -s "$SUCCESS_LIST" ]]; then
-            ISSUE_BODY+="## ✅ 成功列表\n\n<details><summary>展开查看</summary>\n\n\`\`\`\n$(cat "$SUCCESS_LIST")\n\`\`\`\n\n</details>"
-        fi
-        
-        log_info "创建 Issue..."
-        # CNB API 创建 Issue (使用 GitLab 兼容 API)
-        # curl -X POST "https://api.cnb.cool/projects/${CNB_PROJECT}/issues" ...
-        log_info "Issue 功能待配置 CNB API"
+# 更新 Issue (如果启用)
+if [[ -n "$ISSUE_IID" ]] && [[ "$DRY_RUN" != true ]]; then
+    log_info "更新 Issue #$ISSUE_IID..."
+    REPORT=$(generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" 2>/dev/null || echo "")
+    if [[ -n "$REPORT" ]]; then
+        # 转义特殊字符
+        REPORT_ESCAPED=$(echo "$REPORT" | sed 's/"/\\"/g' | tr '\n' '\\' | sed 's/\\/\\n/g')
+        issue_update "$ISSUE_IID" "$REPORT_ESCAPED" 2>/dev/null || true
+        log_info "Issue #$ISSUE_IID 已更新"
+    fi
+    
+    # 如果有失败则保持 Issue 打开，否则关闭
+    if [[ $FAILED_COUNT -eq 0 ]]; then
+        issue_close "$ISSUE_IID" 2>/dev/null || true
     fi
 fi
 
 # 清理临时文件
-rm -f "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$RESULT_FILE"
+rm -f "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST"
 
 # 返回退出码
-if [[ $FAILED_COUNT -gt 0 ]]; then
-    exit 1
-fi
+[[ $FAILED_COUNT -gt 0 ]] && exit 1
+exit 0
