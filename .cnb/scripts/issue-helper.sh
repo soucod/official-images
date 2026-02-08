@@ -98,7 +98,14 @@ issue_create() {
     http_code=$(echo "$response" | tail -1)
     body_response=$(echo "$response" | head -n -1)
     
+    # 完整解析逻辑（与方式1相同）
     iid=$(echo "$body_response" | grep -oE '"iid"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
+    if [[ -z "$iid" ]]; then
+        iid=$(echo "$body_response" | grep -oE '"number"\s*:\s*"[0-9]+"' | head -1 | grep -oE '[0-9]+' || echo "")
+    fi
+    if [[ -z "$iid" ]]; then
+        iid=$(echo "$body_response" | grep -oE '"number"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
+    fi
     
     if [[ -n "$iid" ]] && [[ "$http_code" =~ ^2 ]]; then
         log_issue "✓ Issue #$iid 创建成功 (格式2)"
