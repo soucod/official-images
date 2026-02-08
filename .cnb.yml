@@ -15,7 +15,7 @@ avwq_dev:
         - name: 同步所有镜像
           script: |
             chmod +x .cnb/scripts/*.sh
-            ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing
 
 # ============================================================
 # 2. 手动触发 - 同步单个镜像 (由 .cnb/web_trigger.yml 按钮触发)
@@ -34,7 +34,7 @@ sync_single_image:
             echo "同步镜像: ${IMAGE_NAME}:${IMAGE_TAG:-latest}"
             echo "平台: ${IMAGE_PLATFORM:-docker.io}"
             echo "架构: ${IMAGE_ARCH:-amd64}"
-            ./.cnb/scripts/sync-image.sh "${IMAGE_NAME}:${IMAGE_TAG:-latest}" \
+            bash ./.cnb/scripts/sync-image.sh "${IMAGE_NAME}:${IMAGE_TAG:-latest}" \
               --platform "${IMAGE_PLATFORM:-docker.io}" \
               --arch "${IMAGE_ARCH:-amd64}"
 
@@ -52,7 +52,7 @@ sync_all_images:
         - name: 同步全部镜像
           script: |
             chmod +x .cnb/scripts/*.sh
-            ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch "${SYNC_ARCH:-amd64}"
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch "${SYNC_ARCH:-amd64}"
 
 # ============================================================
 # 4. 手动触发 - 同步指定文件中的镜像
@@ -73,7 +73,7 @@ sync_from_custom_file:
               echo "错误: 文件不存在: $FILE_PATH"
               exit 1
             fi
-            ./.cnb/scripts/sync-from-file.sh "$FILE_PATH" --arch "${SYNC_ARCH:-amd64}"
+            bash ./.cnb/scripts/sync-from-file.sh "$FILE_PATH" --arch "${SYNC_ARCH:-amd64}"
 
 # ============================================================
 # 5. 手动触发 - 同步 library 单个镜像最新版本
@@ -92,7 +92,7 @@ sync_library_image:
             echo "同步 library 镜像: ${LIB_IMAGE_NAME}"
             echo "版本数量: ${VERSION_COUNT:-5}"
             echo "架构: ${SYNC_ARCH:-amd64}"
-            ./.cnb/scripts/sync-library.sh "${LIB_IMAGE_NAME}" \
+            bash ./.cnb/scripts/sync-library.sh "${LIB_IMAGE_NAME}" \
               --versions "${VERSION_COUNT:-5}" \
               --arch "${SYNC_ARCH:-amd64}"
 
@@ -113,6 +113,6 @@ sync_library_all:
             echo "同步全部 library 镜像"
             echo "版本数量: ${VERSION_COUNT:-5}"
             echo "架构: ${SYNC_ARCH:-amd64}"
-            ./.cnb/scripts/sync-library.sh --all \
+            bash ./.cnb/scripts/sync-library.sh --all \
               --versions "${VERSION_COUNT:-5}" \
               --arch "${SYNC_ARCH:-amd64}"

@@ -2,10 +2,12 @@
 # sync-from-file.sh - 从文件批量同步 Docker 镜像到 CNB 仓库
 #
 # 用法:
-#   ./sync-from-file.sh [文件路径] [选项]
-#   ./sync-from-file.sh                    # 默认读取 docker-images.txt
-#   ./sync-from-file.sh mylist.txt
-#   ./sync-from-file.sh --arch arm64       # 指定架构
+#   bash sync-from-file.sh [文件路径] [选项]
+#   bash sync-from-file.sh                    # 默认读取 docker-images.txt
+#   bash sync-from-file.sh mylist.txt
+#   bash sync-from-file.sh --arch arm64       # 指定架构
+#
+# 注意: 必须使用 bash 运行此脚本，不支持 sh
 #
 # 文件格式 (每行一个镜像):
 #   nginx:latest
@@ -16,11 +18,16 @@
 # 选项:
 #   --arch ARCH        架构 (默认: amd64)
 #   --dry-run          仅打印命令，不执行
-#   --parallel N       并行同步数量 (默认: 1)
+#   --skip-existing    跳过已存在的镜像 (增量同步)
 
-set -Eeuo pipefail
+set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 获取脚本目录 (兼容不同运行方式)
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 # 颜色输出
@@ -39,7 +46,6 @@ log_step() { echo -e "${BLUE}[STEP]${NC} $*"; }
 DEFAULT_FILE="${PROJECT_DIR}/docker-images.txt"
 ARCH="amd64"
 DRY_RUN=false
-PARALLEL=1
 SKIP_EXISTING=false
 
 # 统计
@@ -50,20 +56,20 @@ SKIPPED=0
 
 usage() {
     cat << EOF
-用法: $0 [文件路径] [选项]
+用法: bash $0 [文件路径] [选项]
 
 从文件批量同步 Docker 镜像到 CNB 仓库
 
 示例:
-  $0                           # 使用默认文件 docker-images.txt
-  $0 mylist.txt               # 使用指定文件
-  $0 --arch arm64             # 同步 arm64 架构
+  bash $0                           # 使用默认文件 docker-images.txt
+  bash $0 mylist.txt               # 使用指定文件
+  bash $0 --arch arm64             # 同步 arm64 架构
+  bash $0 --skip-existing          # 跳过已存在镜像
 
 选项:
   --arch ARCH        架构 (默认: amd64)
   --dry-run          仅打印命令，不执行
   --skip-existing    跳过已存在的镜像 (增量同步)
-  --parallel N       并行同步数量 (默认: 1)
   -h, --help         显示帮助
 
 文件格式:
@@ -92,10 +98,6 @@ while [[ $# -gt 0 ]]; do
             SKIP_EXISTING=true
             shift
             ;;
-        --parallel)
-            PARALLEL="$2"
-            shift 2
-            ;;
         -h|--help)
             usage
             ;;
@@ -120,9 +122,9 @@ if [[ ! -f "$IMAGE_FILE" ]]; then
     exit 0
 fi
 
-# 检查文件是否有有效内容
-valid_lines=$(grep -v '^#' "$IMAGE_FILE" | grep -v '^[[:space:]]*$' | tr -d '\r' | wc -l)
-if [[ $valid_lines -eq 0 ]]; then
+# 检查文件是否有有效内容 (使用 tr 去除 CRLF)
+valid_lines=$(tr -d '\r' < "$IMAGE_FILE" | grep -v '^#' | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+if [[ "$valid_lines" -eq 0 ]]; then
     log_warn "文件无有效内容，跳过"
     exit 0
 fi
@@ -149,29 +151,29 @@ log_info "========================================"
 # 读取并处理镜像列表
 while IFS= read -r line || [[ -n "$line" ]]; do
     # 去除 CRLF 和首尾空白
-    line=$(echo "$line" | tr -d '\r' | xargs)
+    line=$(echo "$line" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
     # 跳过空行和注释
     if [[ -z "$line" ]] || [[ "$line" == \#* ]]; then
         continue
     fi
 
-    ((TOTAL++))
+    TOTAL=$((TOTAL + 1))
     log_step "[$TOTAL] 处理: $line"
 
     # 调用同步脚本
     sync_result=0
-    "${SCRIPT_DIR}/sync-image.sh" "$line" $SYNC_OPTS || sync_result=$?
+    bash "${SCRIPT_DIR}/sync-image.sh" "$line" $SYNC_OPTS || sync_result=$?
     
     if [[ $sync_result -eq 0 ]]; then
-        ((SUCCESS++))
+        SUCCESS=$((SUCCESS + 1))
         log_info "[$TOTAL] ✓ 成功: $line"
     elif [[ $sync_result -eq 2 ]]; then
         # 返回码 2 表示已跳过
-        ((SKIPPED++))
+        SKIPPED=$((SKIPPED + 1))
         log_info "[$TOTAL] ⊘ 跳过: $line (已存在)"
     else
-        ((FAILED++))
+        FAILED=$((FAILED + 1))
         log_error "[$TOTAL] ✗ 失败: $line"
     fi
 

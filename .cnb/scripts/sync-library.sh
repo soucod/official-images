@@ -19,9 +19,14 @@
 #   CNB_ORG             CNB 组织名 (必填)
 #   CNB_PROJECT         CNB 项目名 (必填)
 
-set -Eeuo pipefail
+set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 获取脚本目录
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 LIBRARY_DIR="${PROJECT_DIR}/library"
 
@@ -181,7 +186,7 @@ sync_image() {
             continue
         fi
 
-        ((sync_count++))
+        sync_count=$((sync_count + 1))
         log_step "[$sync_count] 同步: ${image_name}:${tag}"
 
         local source_image="docker.io/library/${image_name}:${tag}"
@@ -190,19 +195,19 @@ sync_image() {
         if [[ "$DRY_RUN" == true ]]; then
             log_info "[DRY-RUN] 源: $source_image"
             log_info "[DRY-RUN] 目标: $target_image"
-            ((SUCCESS++))
+            SUCCESS=$((SUCCESS + 1))
         else
             # 调用 sync-image.sh 进行实际同步
-            if "${SCRIPT_DIR}/sync-image.sh" "${image_name}:${tag}" --arch "$ARCH"; then
-                ((SUCCESS++))
+            if bash "${SCRIPT_DIR}/sync-image.sh" "${image_name}:${tag}" --arch "$ARCH"; then
+                SUCCESS=$((SUCCESS + 1))
                 log_info "✓ 成功: ${image_name}:${tag}"
             else
-                ((FAILED++))
+                FAILED=$((FAILED + 1))
                 log_error "✗ 失败: ${image_name}:${tag}"
             fi
         fi
 
-        ((TOTAL++))
+        TOTAL=$((TOTAL + 1))
     done <<< "$versions_to_sync"
 
     # 同步 latest 标签 (如果存在)
@@ -210,15 +215,15 @@ sync_image() {
         log_step "同步: ${image_name}:latest"
         if [[ "$DRY_RUN" == true ]]; then
             log_info "[DRY-RUN] 目标: ${CNB_REGISTRY}/${CNB_ORG}/${CNB_PROJECT}/${image_name}:latest"
-            ((SUCCESS++))
+            SUCCESS=$((SUCCESS + 1))
         else
-            if "${SCRIPT_DIR}/sync-image.sh" "${image_name}:latest" --arch "$ARCH"; then
-                ((SUCCESS++))
+            if bash "${SCRIPT_DIR}/sync-image.sh" "${image_name}:latest" --arch "$ARCH"; then
+                SUCCESS=$((SUCCESS + 1))
             else
-                ((FAILED++))
+                FAILED=$((FAILED + 1))
             fi
         fi
-        ((TOTAL++))
+        TOTAL=$((TOTAL + 1))
     fi
 
     log_info "✓ ${image_name} 处理完成 (同步 $sync_count 个版本)"

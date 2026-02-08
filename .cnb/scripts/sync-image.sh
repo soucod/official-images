@@ -19,7 +19,7 @@
 #   SOURCE_USERNAME    源仓库用户名 (私有镜像需要)
 #   SOURCE_PASSWORD    源仓库密码 (私有镜像需要)
 
-set -Eeuo pipefail
+set -euo pipefail
 
 # 颜色输出
 RED='\033[0;31m'
