@@ -56,6 +56,7 @@ issue_create() {
         "${CNB_API_URL}/${CNB_REPO_SLUG}/issues" \
         -H "Authorization: Bearer ${CNB_TOKEN}" \
         -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
         -d "{\"title\": \"${title}\", \"body\": \"${body}\"}" \
         2>/dev/null) || true
     
@@ -83,6 +84,7 @@ issue_create() {
         "${CNB_API_URL}/${CNB_REPO_SLUG}/-/issues" \
         -H "Authorization: Bearer ${CNB_TOKEN}" \
         -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
         -d "{\"title\": \"${title}\", \"description\": \"${body}\"}" \
         2>/dev/null) || true
     

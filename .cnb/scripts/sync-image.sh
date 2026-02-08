@@ -35,6 +35,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 CNB_REGISTRY="${CNB_REGISTRY:-docker.cnb.cool}"
 CNB_ORG="${CNB_ORG:-}"
 CNB_PROJECT="${CNB_PROJECT:-}"
+PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"
 DEFAULT_PLATFORM="docker.io"
 DEFAULT_TAG="latest"
 DEFAULT_ARCH="amd64"
