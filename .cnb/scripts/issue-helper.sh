@@ -39,49 +39,67 @@ issue_create() {
         return 1
     fi
     
-    local repo_encoded
-    repo_encoded=$(url_encode "$CNB_REPO_SLUG")
+    # 确保 CNB_REPO_SLUG 正确设置
+    if [[ -z "${CNB_REPO_SLUG:-}" ]]; then
+        CNB_REPO_SLUG="${CNB_ORG:-}/${CNB_PROJECT:-}"
+    fi
     
     log_issue "创建 Issue: $title"
     log_issue "仓库: $CNB_REPO_SLUG"
+    log_issue "API: ${CNB_API_URL}"
     
-    # 尝试 CNB OpenAPI 格式 (v1)
-    local response
-    response=$(curl -s -X POST \
+    local response iid
+    
+    # 方式1: CNB OpenAPI (推荐)
+    # POST https://api.cnb.cool/{group}/{repo}/issues
+    response=$(curl -s -w "\n%{http_code}" -X POST \
+        "${CNB_API_URL}/${CNB_REPO_SLUG}/issues" \
+        -H "Authorization: Bearer ${CNB_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"title\": \"${title}\", \"body\": \"${body}\"}" \
+        2>/dev/null) || true
+    
+    local http_code=$(echo "$response" | tail -1)
+    local body_response=$(echo "$response" | head -n -1)
+    
+    log_issue "响应码: $http_code"
+    
+    iid=$(echo "$body_response" | grep -oE '"iid"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
+    if [[ -z "$iid" ]]; then
+        iid=$(echo "$body_response" | grep -oE '"number"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
+    fi
+    if [[ -z "$iid" ]]; then
+        iid=$(echo "$body_response" | grep -oE '"id"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
+    fi
+    
+    if [[ -n "$iid" ]] && [[ "$http_code" =~ ^2 ]]; then
+        log_issue "✓ Issue #$iid 创建成功"
+        echo "$iid"
+        return 0
+    fi
+    
+    # 方式2: CNB OpenAPI 备选格式
+    response=$(curl -s -w "\n%{http_code}" -X POST \
         "${CNB_API_URL}/${CNB_REPO_SLUG}/-/issues" \
         -H "Authorization: Bearer ${CNB_TOKEN}" \
         -H "Content-Type: application/json" \
         -d "{\"title\": \"${title}\", \"description\": \"${body}\"}" \
         2>/dev/null) || true
     
-    local iid
-    iid=$(echo "$response" | grep -oE '"iid"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
+    http_code=$(echo "$response" | tail -1)
+    body_response=$(echo "$response" | head -n -1)
     
-    if [[ -n "$iid" ]]; then
-        log_issue "✓ Issue #$iid 创建成功"
+    iid=$(echo "$body_response" | grep -oE '"iid"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
+    
+    if [[ -n "$iid" ]] && [[ "$http_code" =~ ^2 ]]; then
+        log_issue "✓ Issue #$iid 创建成功 (格式2)"
         echo "$iid"
         return 0
     fi
     
-    # 尝试 GitLab API v4 格式
-    response=$(curl -s -X POST \
-        "${CNB_API_URL}/api/v4/projects/${repo_encoded}/issues" \
-        -H "PRIVATE-TOKEN: ${CNB_TOKEN}" \
-        -H "Content-Type: application/json" \
-        -d "{\"title\": \"${title}\", \"description\": \"${body}\"}" \
-        2>/dev/null) || true
-    
-    iid=$(echo "$response" | grep -oE '"iid"\s*:\s*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo "")
-    
-    if [[ -n "$iid" ]]; then
-        log_issue "✓ Issue #$iid 创建成功 (v4 API)"
-        echo "$iid"
-        return 0
-    fi
-    
-    # 记录失败但不阻塞同步
-    log_issue "⚠️ Issue 创建失败，继续同步任务"
-    log_issue "响应: ${response:0:100}"
+    # 记录失败详情，但不阻塞同步
+    log_issue "⚠️ Issue 创建失败 (HTTP $http_code)"
+    log_issue "响应内容: ${body_response:0:200}"
     return 1
 }
 
@@ -116,15 +134,15 @@ issue_update() {
         return 1
     fi
     
-    local repo_encoded
-    repo_encoded=$(url_encode "$CNB_REPO_SLUG")
-    
-    curl -s -X PUT \
-        "${CNB_API_URL}/api/v4/projects/${repo_encoded}/issues/${iid}" \
-        -H "PRIVATE-TOKEN: ${CNB_TOKEN}" \
+    # CNB API 格式
+    curl -s -X PATCH \
+        "${CNB_API_URL}/${CNB_REPO_SLUG}/issues/${iid}" \
+        -H "Authorization: Bearer ${CNB_TOKEN}" \
         -H "Content-Type: application/json" \
-        -d "{\"description\": \"${body}\"}" \
+        -d "{\"body\": \"${body}\"}" \
         >/dev/null 2>&1 || true
+    
+    log_issue "Issue #$iid 已更新"
 }
 
 # 关闭 Issue
@@ -136,14 +154,12 @@ issue_close() {
         return 1
     fi
     
-    local repo_encoded
-    repo_encoded=$(url_encode "$CNB_REPO_SLUG")
-    
-    curl -s -X PUT \
-        "${CNB_API_URL}/api/v4/projects/${repo_encoded}/issues/${iid}" \
-        -H "PRIVATE-TOKEN: ${CNB_TOKEN}" \
+    # CNB API 格式
+    curl -s -X PATCH \
+        "${CNB_API_URL}/${CNB_REPO_SLUG}/issues/${iid}" \
+        -H "Authorization: Bearer ${CNB_TOKEN}" \
         -H "Content-Type: application/json" \
-        -d '{"state_event": "close"}' \
+        -d '{"state": "closed"}' \
         >/dev/null 2>&1 || true
     
     log_issue "Issue #$iid 已关闭"

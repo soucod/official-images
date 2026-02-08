@@ -174,7 +174,31 @@ log_info "生成同步报告: $REPORT_FILE"
     generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" "$IMAGE_FILE"
 } > "$REPORT_FILE" 2>/dev/null || true
 
-log_info "报告已生成"
+# 自动创建/更新 Issue
+if [[ "$DRY_RUN" != true ]]; then
+    ISSUE_TITLE="sync-report-${TIMESTAMP}"
+    ISSUE_BODY="## 🔄 镜像同步任务\\n\\n⏳ 同步进行中..."
+    
+    log_info "创建同步 Issue..."
+    ISSUE_IID=$(issue_create "$ISSUE_TITLE" "$ISSUE_BODY" 2>/dev/null || echo "")
+    
+    if [[ -n "$ISSUE_IID" ]]; then
+        log_info "更新 Issue #$ISSUE_IID 内容..."
+        REPORT_CONTENT=$(cat "$REPORT_FILE" 2>/dev/null | head -c 50000 || echo "")
+        # 转义 JSON 特殊字符
+        REPORT_ESCAPED=$(echo "$REPORT_CONTENT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ' | sed 's/  */ /g')
+        issue_update "$ISSUE_IID" "$REPORT_ESCAPED" 2>/dev/null || true
+        
+        # 全部成功时关闭 Issue
+        if [[ $FAILED_COUNT -eq 0 ]]; then
+            issue_close "$ISSUE_IID" 2>/dev/null || true
+        fi
+    else
+        log_info "Issue 创建跳过（可能 CNB_TOKEN 未配置或无权限）"
+    fi
+fi
+
+log_info "报告已生成: $REPORT_FILE"
 
 # 清理临时文件
 rm -f "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST"
@@ -182,4 +206,3 @@ rm -f "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST"
 # 返回退出码
 [[ $FAILED_COUNT -gt 0 ]] && exit 1
 exit 0
-
