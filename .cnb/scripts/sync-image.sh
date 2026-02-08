@@ -212,26 +212,15 @@ main() {
         sync_with_docker "$source_image" "$target_image"
     fi
 
-    # 同步成功，更新缓存
-    update_sync_cache "$target_image"
-    
     log_info "✓ 同步完成: $target_image"
 }
 
 # 检查目标镜像是否已存在
-# 优化方案：Git 仓库缓存 + Registry HEAD 请求（避免下载统计）
+# 使用 Registry HEAD 请求（避免下载统计）
 check_image_exists() {
     local target="$1"
-    # 使用 Git 仓库内的缓存文件（持久化）
-    local cache_file="${PROJECT_DIR}/.cache/synced-images.txt"
     
-    # 1. Git 仓库缓存检查 (零网络请求)
-    if [[ -f "$cache_file" ]] && grep -qF "$target" "$cache_file" 2>/dev/null; then
-        log_info "[缓存] 镜像已存在: $target"
-        return 0
-    fi
-    
-    # 2. Registry HEAD 请求 (最轻量，仅获取 headers)
+    # 1. Registry HEAD 请求 (最轻量，仅获取 headers)
     local registry="${target%%/*}"
     local repo_tag="${target#*/}"
     local repo="${repo_tag%:*}"
@@ -249,25 +238,13 @@ check_image_exists() {
         return 0
     fi
     
-    # 3. fallback: docker manifest inspect
+    # 2. fallback: docker manifest inspect
     if docker manifest inspect "$target" >/dev/null 2>&1; then
         log_info "[manifest] 镜像已存在: $target"
         return 0
     fi
     
     return 1  # 不存在
-}
-
-# 更新缓存（同步成功后调用）
-update_sync_cache() {
-    local target="$1"
-    local cache_file="${PROJECT_DIR}/.cache/synced-images.txt"
-    # 确保目录存在
-    mkdir -p "$(dirname "$cache_file")" 2>/dev/null || true
-    # 避免重复添加
-    if ! grep -qF "$target" "$cache_file" 2>/dev/null; then
-        echo "$target" >> "$cache_file"
-    fi
 }
 
 # 使用 skopeo 同步 (推荐，无需本地存储)

@@ -17,17 +17,6 @@ avwq_dev:
           script: |
             chmod +x .cnb/scripts/*.sh
             bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3
-        # 提交缓存更新到 Git 仓库
-        - name: 提交缓存更新
-          script: |
-            if [[ -f ".cache/synced-images.txt" ]]; then
-              git config user.name "CNB Bot"
-              git config user.email "bot@cnb.cool"
-              git add .cache/synced-images.txt
-              git diff --cached --quiet || git commit -m "chore: 更新同步缓存"
-              git push origin HEAD || true
-            fi
-          allow_failure: true
         # 使用 CNB 内置任务更新 Issue
         - name: 更新同步 Issue
           type: git:issue-update
@@ -159,17 +148,6 @@ $:
             echo "Issue #$CNB_ISSUE_IID: $CNB_ISSUE_TITLE"
             echo "=========================================="
             bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3
-        # 提交缓存更新
-        - name: 提交缓存更新
-          script: |
-            if [[ -f ".cache/synced-images.txt" ]]; then
-              git config user.name "CNB Bot"
-              git config user.email "bot@cnb.cool"
-              git add .cache/synced-images.txt
-              git diff --cached --quiet || git commit -m "chore: 更新同步缓存"
-              git push origin HEAD || true
-            fi
-          allow_failure: true
         # 更新 Issue 状态
         - name: 更新 Issue 状态
           type: git:issue-update
