@@ -174,27 +174,41 @@ log_info "生成同步报告: $REPORT_FILE"
     generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" "$IMAGE_FILE"
 } > "$REPORT_FILE" 2>/dev/null || true
 
-# 自动创建/更新 Issue
+# Issue 更新逻辑
+# 优先使用 CNB_ISSUE_IID (Issue 事件触发时自动注入)
+# 否则尝试创建新 Issue
 if [[ "$DRY_RUN" != true ]]; then
-    ISSUE_TITLE="sync-report-${TIMESTAMP}"
-    ISSUE_BODY="## 🔄 镜像同步任务\\n\\n⏳ 同步进行中..."
-    
-    log_info "创建同步 Issue..."
-    ISSUE_IID=$(issue_create "$ISSUE_TITLE" "$ISSUE_BODY" 2>/dev/null || echo "")
+    ISSUE_IID="${CNB_ISSUE_IID:-}"
     
     if [[ -n "$ISSUE_IID" ]]; then
+        # Issue 事件触发，直接更新
         log_info "更新 Issue #$ISSUE_IID 内容..."
         REPORT_CONTENT=$(cat "$REPORT_FILE" 2>/dev/null | head -c 50000 || echo "")
-        # 转义 JSON 特殊字符
         REPORT_ESCAPED=$(echo "$REPORT_CONTENT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ' | sed 's/  */ /g')
         issue_update "$ISSUE_IID" "$REPORT_ESCAPED" 2>/dev/null || true
         
-        # 全部成功时关闭 Issue
         if [[ $FAILED_COUNT -eq 0 ]]; then
             issue_close "$ISSUE_IID" 2>/dev/null || true
         fi
     else
-        log_info "Issue 创建跳过（可能 CNB_TOKEN 未配置或无权限）"
+        # 非 Issue 事件触发，尝试创建新 Issue
+        log_info "创建同步 Issue..."
+        ISSUE_TITLE="sync-report-${TIMESTAMP}"
+        ISSUE_BODY="## 🔄 镜像同步任务\\n\\n⏳ 同步进行中..."
+        ISSUE_IID=$(issue_create "$ISSUE_TITLE" "$ISSUE_BODY" 2>/dev/null || echo "")
+        
+        if [[ -n "$ISSUE_IID" ]]; then
+            log_info "更新 Issue #$ISSUE_IID 内容..."
+            REPORT_CONTENT=$(cat "$REPORT_FILE" 2>/dev/null | head -c 50000 || echo "")
+            REPORT_ESCAPED=$(echo "$REPORT_CONTENT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ' | sed 's/  */ /g')
+            issue_update "$ISSUE_IID" "$REPORT_ESCAPED" 2>/dev/null || true
+            
+            if [[ $FAILED_COUNT -eq 0 ]]; then
+                issue_close "$ISSUE_IID" 2>/dev/null || true
+            fi
+        else
+            log_info "Issue 创建跳过（可能 CNB_TOKEN 未配置或无权限）"
+        fi
     fi
 fi
 

@@ -126,3 +126,36 @@ sync_library_all:
             bash ./.cnb/scripts/sync-library.sh --all \
               --versions "${VERSION_COUNT:-5}" \
               --arch "${SYNC_ARCH:-amd64}"
+
+# ============================================================
+# 7. Issue 驱动同步 - 创建带 sync 标签的 Issue 自动触发
+# ============================================================
+$:
+  issue.open:
+    - when:
+        label: sync
+      services:
+        - docker
+      timeout: 23h
+      env:
+        CNB_ORG: avwq
+        CNB_PROJECT: soucod/official-images
+      stages:
+        - name: Issue 触发同步
+          script: |
+            chmod +x .cnb/scripts/*.sh
+            echo "=========================================="
+            echo "Issue #$CNB_ISSUE_IID: $CNB_ISSUE_TITLE"
+            echo "=========================================="
+            # 使用 Issue 描述中的配置，或默认值
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3
+        # 同步完成后更新 Issue
+        - name: 更新 Issue 状态
+          type: git:issue-update
+          options:
+            fromFile: SYNC_REPORT.md
+            label:
+              add: completed
+              remove: sync
+            state: close
+          allow_failure: true
