@@ -57,6 +57,12 @@ ghcr.io/graalvm/graalvm-community:17
 ghcr.io/graalvm/graalvm-community:11
 ghcr.io/graalvm/graalvm-community:8
 ghcr.io/graalvm/graalvm-community:7
+ghcr.io/graalvm/graalvm-jdk-community:25
+ghcr.io/graalvm/graalvm-jdk-community:21
+ghcr.io/graalvm/graalvm-jdk-community:17
+ghcr.io/graalvm/graalvm-jdk-community:11
+ghcr.io/graalvm/graalvm-jdk-community:8
+ghcr.io/graalvm/graalvm-jdk-community:7
 
 
 jeessy/ddns-go:latest
