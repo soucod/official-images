@@ -17,7 +17,6 @@ avwq_dev:
           script: |
             chmod +x .cnb/scripts/*.sh
             bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3
-        # 使用 CNB 内置任务更新 Issue
         - name: 更新同步 Issue
           type: git:issue-update
           options:
@@ -28,107 +27,7 @@ avwq_dev:
           allow_failure: true
 
 # ============================================================
-# 2. 手动触发 - 同步单个镜像 (由 .cnb/web_trigger.yml 按钮触发)
-# ============================================================
-sync_single_image:
-  web_trigger:
-    - services:
-        - docker
-      env:
-        CNB_ORG: avwq
-        CNB_PROJECT: soucod/official-images
-      stages:
-        - name: 同步指定镜像
-          script: |
-            chmod +x .cnb/scripts/*.sh
-            echo "同步镜像: ${IMAGE_NAME}:${IMAGE_TAG:-latest}"
-            echo "平台: ${IMAGE_PLATFORM:-docker.io}"
-            echo "架构: ${IMAGE_ARCH:-amd64}"
-            bash ./.cnb/scripts/sync-image.sh "${IMAGE_NAME}:${IMAGE_TAG:-latest}" \
-              --platform "${IMAGE_PLATFORM:-docker.io}" \
-              --arch "${IMAGE_ARCH:-amd64}"
-
-# ============================================================
-# 3. 手动触发 - 同步所有镜像
-# ============================================================
-sync_all_images:
-  web_trigger:
-    - services:
-        - docker
-      env:
-        CNB_ORG: avwq
-        CNB_PROJECT: soucod/official-images
-      stages:
-        - name: 同步全部镜像
-          script: |
-            chmod +x .cnb/scripts/*.sh
-            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch "${SYNC_ARCH:-amd64}" --parallel 3
-
-# ============================================================
-# 4. 手动触发 - 同步指定文件中的镜像
-# ============================================================
-sync_from_custom_file:
-  web_trigger:
-    - services:
-        - docker
-      env:
-        CNB_ORG: avwq
-        CNB_PROJECT: soucod/official-images
-      stages:
-        - name: 同步指定文件中的镜像
-          script: |
-            chmod +x .cnb/scripts/*.sh
-            FILE_PATH="${CUSTOM_FILE:-docker-images.txt}"
-            if [ ! -f "$FILE_PATH" ]; then
-              echo "错误: 文件不存在: $FILE_PATH"
-              exit 1
-            fi
-            bash ./.cnb/scripts/sync-from-file.sh "$FILE_PATH" --arch "${SYNC_ARCH:-amd64}" --parallel 3
-
-# ============================================================
-# 5. 手动触发 - 同步 library 单个镜像最新版本
-# ============================================================
-sync_library_image:
-  web_trigger:
-    - services:
-        - docker
-      env:
-        CNB_ORG: avwq
-        CNB_PROJECT: soucod/official-images
-      stages:
-        - name: 同步 library 镜像
-          script: |
-            chmod +x .cnb/scripts/*.sh
-            echo "同步 library 镜像: ${LIB_IMAGE_NAME}"
-            echo "版本数量: ${VERSION_COUNT:-5}"
-            echo "架构: ${SYNC_ARCH:-amd64}"
-            bash ./.cnb/scripts/sync-library.sh "${LIB_IMAGE_NAME}" \
-              --versions "${VERSION_COUNT:-5}" \
-              --arch "${SYNC_ARCH:-amd64}"
-
-# ============================================================
-# 6. 手动触发 - 同步 library 全部镜像
-# ============================================================
-sync_library_all:
-  web_trigger:
-    - services:
-        - docker
-      env:
-        CNB_ORG: avwq
-        CNB_PROJECT: soucod/official-images
-      stages:
-        - name: 同步全部 library 镜像
-          script: |
-            chmod +x .cnb/scripts/*.sh
-            echo "同步全部 library 镜像"
-            echo "版本数量: ${VERSION_COUNT:-5}"
-            echo "架构: ${SYNC_ARCH:-amd64}"
-            bash ./.cnb/scripts/sync-library.sh --all \
-              --versions "${VERSION_COUNT:-5}" \
-              --arch "${SYNC_ARCH:-amd64}"
-
-# ============================================================
-# 7. Issue 驱动同步 - 创建带 sync 标签的 Issue 自动触发
+# Issue 驱动同步 - 创建带 sync 标签的 Issue 自动触发
 # ============================================================
 $:
   issue.open:
@@ -148,7 +47,6 @@ $:
             echo "Issue #$CNB_ISSUE_IID: $CNB_ISSUE_TITLE"
             echo "=========================================="
             bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3
-        # 更新 Issue 状态
         - name: 更新 Issue 状态
           type: git:issue-update
           options:
@@ -158,3 +56,97 @@ $:
               remove: sync
             state: close
           allow_failure: true
+
+# ============================================================
+# 手动触发 - Web 按钮 (所有分支可用)
+# ============================================================
+"**":
+  # 同步单个镜像
+  sync_single_image:
+    web_trigger:
+      - services:
+          - docker
+        env:
+          CNB_ORG: avwq
+          CNB_PROJECT: soucod/official-images
+        stages:
+          - name: 同步指定镜像
+            script: |
+              chmod +x .cnb/scripts/*.sh
+              echo "同步镜像: ${IMAGE_NAME}:${IMAGE_TAG:-latest}"
+              echo "平台: ${IMAGE_PLATFORM:-docker.io}"
+              echo "架构: ${IMAGE_ARCH:-amd64}"
+              bash ./.cnb/scripts/sync-image.sh "${IMAGE_NAME}:${IMAGE_TAG:-latest}" \
+                --platform "${IMAGE_PLATFORM:-docker.io}" \
+                --arch "${IMAGE_ARCH:-amd64}"
+
+  # 同步所有镜像
+  sync_all_images:
+    web_trigger:
+      - services:
+          - docker
+        env:
+          CNB_ORG: avwq
+          CNB_PROJECT: soucod/official-images
+        stages:
+          - name: 同步全部镜像
+            script: |
+              chmod +x .cnb/scripts/*.sh
+              bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch "${SYNC_ARCH:-amd64}" --parallel 3
+
+  # 同步指定文件
+  sync_from_custom_file:
+    web_trigger:
+      - services:
+          - docker
+        env:
+          CNB_ORG: avwq
+          CNB_PROJECT: soucod/official-images
+        stages:
+          - name: 同步指定文件中的镜像
+            script: |
+              chmod +x .cnb/scripts/*.sh
+              FILE_PATH="${CUSTOM_FILE:-docker-images.txt}"
+              if [ ! -f "$FILE_PATH" ]; then
+                echo "错误: 文件不存在: $FILE_PATH"
+                exit 1
+              fi
+              bash ./.cnb/scripts/sync-from-file.sh "$FILE_PATH" --arch "${SYNC_ARCH:-amd64}" --parallel 3
+
+  # 同步 library 单个镜像
+  sync_library_image:
+    web_trigger:
+      - services:
+          - docker
+        env:
+          CNB_ORG: avwq
+          CNB_PROJECT: soucod/official-images
+        stages:
+          - name: 同步 library 镜像
+            script: |
+              chmod +x .cnb/scripts/*.sh
+              echo "同步 library 镜像: ${LIB_IMAGE_NAME}"
+              echo "版本数量: ${VERSION_COUNT:-5}"
+              echo "架构: ${SYNC_ARCH:-amd64}"
+              bash ./.cnb/scripts/sync-library.sh "${LIB_IMAGE_NAME}" \
+                --versions "${VERSION_COUNT:-5}" \
+                --arch "${SYNC_ARCH:-amd64}"
+
+  # 同步全部 library 镜像
+  sync_library_all:
+    web_trigger:
+      - services:
+          - docker
+        env:
+          CNB_ORG: avwq
+          CNB_PROJECT: soucod/official-images
+        stages:
+          - name: 同步全部 library 镜像
+            script: |
+              chmod +x .cnb/scripts/*.sh
+              echo "同步全部 library 镜像"
+              echo "版本数量: ${VERSION_COUNT:-5}"
+              echo "架构: ${SYNC_ARCH:-amd64}"
+              bash ./.cnb/scripts/sync-library.sh --all \
+                --versions "${VERSION_COUNT:-5}" \
+                --arch "${SYNC_ARCH:-amd64}"
