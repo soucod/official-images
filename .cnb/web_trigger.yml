@@ -1,35 +1,32 @@
 # CNB 手动触发按钮配置
 # 文档: https://docs.cnb.cool/zh/build/web-trigger.html
 
-# 匹配所有分支
 branch:
-  - reg: .*
-    buttons:
-      # ========================================
+  # 所有分支可用
+  - buttons:
       # 按钮 1: 同步单个镜像
-      # ========================================
       - name: 🔄 同步单个镜像
         description: 同步指定的 Docker 镜像到 CNB 仓库
         event: sync_single_image
         inputs:
           IMAGE_NAME:
             name: 镜像名称
-            type: input
             description: 镜像名称 (不含平台前缀和标签)
-            placeholder: "nginx 或 library/mysql"
+            placeholder: nginx 或 library/mysql
             required: true
+            type: input
           IMAGE_TAG:
             name: 镜像标签
-            type: input
             description: 镜像标签
-            placeholder: "latest"
-            default: "latest"
+            placeholder: latest
+            default: latest
             required: false
+            type: input
           IMAGE_ARCH:
             name: 镜像架构
-            type: select
             description: 镜像架构
-            default: "amd64"
+            type: select
+            default: amd64
             options:
               - name: x86_64 (amd64)
                 value: amd64
@@ -37,120 +34,81 @@ branch:
                 value: arm64
           IMAGE_PLATFORM:
             name: 源镜像平台
-            type: select
             description: 源镜像平台
-            default: "docker.io"
+            type: select
+            default: docker.io
             options:
-              - name: Docker Hub (docker.io)
+              - name: Docker Hub
                 value: docker.io
-              - name: GitHub Container Registry (ghcr.io)
+              - name: GitHub Container Registry
                 value: ghcr.io
               - name: Quay.io
                 value: quay.io
 
-      # ========================================
       # 按钮 2: 同步所有镜像
-      # ========================================
       - name: 📦 同步所有镜像
-        description: 同步 docker-images.txt 中的所有镜像到 CNB 仓库
+        description: 同步 docker-images.txt 中的所有镜像
         event: sync_all_images
         inputs:
           SYNC_ARCH:
             name: 镜像架构
             type: select
-            description: 镜像架构
-            default: "amd64"
+            default: amd64
             options:
               - name: x86_64 (amd64)
                 value: amd64
               - name: ARM64 (arm64)
                 value: arm64
 
-      # ========================================
       # 按钮 3: 同步指定文件
-      # ========================================
       - name: 📄 同步指定文件
         description: 同步指定文件中列出的镜像
         event: sync_from_custom_file
         inputs:
           CUSTOM_FILE:
-            name: 镜像列表文件
-            type: input
-            description: 镜像列表文件路径 (相对于仓库根目录)
-            placeholder: "docker-images.txt"
-            default: "docker-images.txt"
+            name: 文件路径
+            description: 镜像列表文件路径
+            placeholder: docker-images.txt
+            default: docker-images.txt
             required: true
+            type: input
           SYNC_ARCH:
             name: 镜像架构
             type: select
-            description: 镜像架构
-            default: "amd64"
+            default: amd64
             options:
               - name: x86_64 (amd64)
                 value: amd64
               - name: ARM64 (arm64)
                 value: arm64
 
-      # ========================================
-      # 按钮 4: 同步 library 单个镜像
-      # ========================================
+      # 按钮 4: 同步 library 镜像
       - name: 📚 同步 library 镜像
-        description: 同步 library 目录中定义的 Docker Official Image
+        description: 同步 library 目录中定义的镜像
         event: sync_library_image
         inputs:
           LIB_IMAGE_NAME:
             name: 镜像名称
-            type: input
-            description: 镜像名称 (如 openjdk, alpine, nginx)
-            placeholder: "openjdk"
+            description: library 目录中的文件名
+            placeholder: openjdk
             required: true
+            type: input
           VERSION_COUNT:
             name: 版本数量
-            type: select
             description: 同步最近几个主版本
+            type: select
             default: "5"
             options:
-              - name: 最近 3 个版本
+              - name: 最近 3 个
                 value: "3"
-              - name: 最近 5 个版本
+              - name: 最近 5 个
                 value: "5"
-              - name: 最近 10 个版本
+              - name: 最近 10 个
                 value: "10"
           SYNC_ARCH:
             name: 镜像架构
             type: select
-            description: 镜像架构
-            default: "amd64"
-            options:
-              - name: x86_64 (amd64)
-                value: amd64
-              - name: ARM64 (arm64)
-                value: arm64
-
-      # ========================================
-      # 按钮 5: 同步全部 library 镜像
-      # ========================================
-      - name: 🗂️ 同步全部 library
-        description: 同步 library 目录中所有 Docker Official Images
-        event: sync_library_all
-        inputs:
-          VERSION_COUNT:
-            name: 版本数量
-            type: select
-            description: 每个镜像同步最近几个主版本
-            default: "5"
-            options:
-              - name: 最近 3 个版本
-                value: "3"
-              - name: 最近 5 个版本
-                value: "5"
-              - name: 最近 10 个版本
-                value: "10"
-          SYNC_ARCH:
-            name: 镜像架构
-            type: select
-            description: 镜像架构
-            default: "amd64"
+            default: amd64
             options:
               - name: x86_64 (amd64)
                 value: amd64
