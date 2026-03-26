@@ -2,7 +2,7 @@ name: Sync openclaw main to avwq_dev
 
 on:
   schedule:
-    - cron: '0 1/7 * * *'
+    - cron: '0 2 * * *'
       timezone: 'Asia/Shanghai'
   workflow_dispatch:
 
