@@ -2,65 +2,33 @@ Maintainers: XWiki Core Dev Team <committers@xwiki.org> (@xwiki)
 GitRepo: https://github.com/xwiki-contrib/docker-xwiki.git
 
 # Latest stable
-Tags: 18, 18.2, 18.2.0, 18-mysql-tomcat, 18.2-mysql-tomcat, 18.2.0-mysql-tomcat, mysql-tomcat, stable-mysql-tomcat, stable-mysql, stable, latest
+Tags: 18, 18.3, 18.3.0, 18-mysql-tomcat, 18.3-mysql-tomcat, 18.3.0-mysql-tomcat, mysql-tomcat, stable-mysql-tomcat, stable-mysql, stable, latest
 Architectures: amd64, arm64v8
 Directory: 18/mysql-tomcat
-GitCommit: f8f227381343914aa967acd67a6de2c0562af9bf
+GitCommit: 63a1633def10e6623cea5626efbc896ee167cdf7
 
-Tags: 18-postgres-tomcat, 18.2-postgres-tomcat, 18.2.0-postgres-tomcat, postgres-tomcat, stable-postgres-tomcat, stable-postgres
+Tags: 18-postgres-tomcat, 18.3-postgres-tomcat, 18.3.0-postgres-tomcat, postgres-tomcat, stable-postgres-tomcat, stable-postgres
 Architectures: amd64, arm64v8
 Directory: 18/postgres-tomcat
-GitCommit: f8f227381343914aa967acd67a6de2c0562af9bf
+GitCommit: 63a1633def10e6623cea5626efbc896ee167cdf7
 
-Tags: 18-mariadb-tomcat, 18.2-mariadb-tomcat, 18.2.0-mariadb-tomcat, mariadb-tomcat, stable-mariadb-tomcat, stable-mariadb
+Tags: 18-mariadb-tomcat, 18.3-mariadb-tomcat, 18.3.0-mariadb-tomcat, mariadb-tomcat, stable-mariadb-tomcat, stable-mariadb
 Architectures: amd64, arm64v8
 Directory: 18/mariadb-tomcat
-GitCommit: f8f227381343914aa967acd67a6de2c0562af9bf
+GitCommit: 63a1633def10e6623cea5626efbc896ee167cdf7
 
 # LTS
-Tags: 17, 17.10, 17.10.5, 17-mysql-tomcat, 17.10-mysql-tomcat, 17.10.5-mysql-tomcat, lts-mysql-tomcat, lts-mysql, lts
+Tags: 17, 17.10, 17.10.8, 17-mysql-tomcat, 17.10-mysql-tomcat, 17.10.8-mysql-tomcat, lts-mysql-tomcat, lts-mysql, lts
 Architectures: amd64, arm64v8
 Directory: 17/mysql-tomcat
-GitCommit: 52c1d0f0fb15f2162203eb10bb7ad1b35cace574
+GitCommit: 42a6262363af05659e1199af4474007320598c71
 
-Tags: 17-postgres-tomcat, 17.10-postgres-tomcat, 17.10.5-postgres-tomcat, lts-postgres-tomcat, lts-postgres
+Tags: 17-postgres-tomcat, 17.10-postgres-tomcat, 17.10.8-postgres-tomcat, lts-postgres-tomcat, lts-postgres
 Architectures: amd64, arm64v8
 Directory: 17/postgres-tomcat
-GitCommit: 52c1d0f0fb15f2162203eb10bb7ad1b35cace574
+GitCommit: 42a6262363af05659e1199af4474007320598c71
 
-Tags: 17-mariadb-tomcat, 17.10-mariadb-tomcat, 17.10.5-mariadb-tomcat, lts-mariadb-tomcat, lts-mariadb
+Tags: 17-mariadb-tomcat, 17.10-mariadb-tomcat, 17.10.8-mariadb-tomcat, lts-mariadb-tomcat, lts-mariadb
 Architectures: amd64, arm64v8
 Directory: 17/mariadb-tomcat
-GitCommit: 52c1d0f0fb15f2162203eb10bb7ad1b35cace574
-
-# Intermediate LTS
-Tags: 17.4, 17.4.10, 17.4-mysql-tomcat, 17.4.10-mysql-tomcat
-Architectures: amd64, arm64v8
-Directory: 17.4/mysql-tomcat
-GitCommit: e5ffa6f9ff2a3d9241053e179c976b5e098957a2
-
-Tags: 17.4-postgres-tomcat, 17.4.10-postgres-tomcat
-Architectures: amd64, arm64v8
-Directory: 17.4/postgres-tomcat
-GitCommit: e5ffa6f9ff2a3d9241053e179c976b5e098957a2
-
-Tags: 17.4-mariadb-tomcat, 17.4.10-mariadb-tomcat
-Architectures: amd64, arm64v8
-Directory: 17.4/mariadb-tomcat
-GitCommit: e5ffa6f9ff2a3d9241053e179c976b5e098957a2
-
-# Previous LTS
-Tags: 16, 16.10, 16.10.17, 16-mysql-tomcat, 16.10-mysql-tomcat, 16.10.17-mysql-tomcat
-Architectures: amd64, arm64v8
-Directory: 16/mysql-tomcat
-GitCommit: 8ce19d8b799ac7b59c2c50da5f10574b0375c762
-
-Tags: 16-postgres-tomcat, 16.10-postgres-tomcat, 16.10.17-postgres-tomcat
-Architectures: amd64, arm64v8
-Directory: 16/postgres-tomcat
-GitCommit: 8ce19d8b799ac7b59c2c50da5f10574b0375c762
-
-Tags: 16-mariadb-tomcat, 16.10-mariadb-tomcat, 16.10.17-mariadb-tomcat
-Architectures: amd64, arm64v8
-Directory: 16/mariadb-tomcat
-GitCommit: 8ce19d8b799ac7b59c2c50da5f10574b0375c762
+GitCommit: 42a6262363af05659e1199af4474007320598c71

@@ -1,31 +1,29 @@
 Maintainers: Brandon Pfeifer <bpfeifer@influxdata.com> (@bnpfeife),
              Devan Benz <dbenz@influxdata.com> (@devanbenz),
              Geoffrey Wossum <gwossum@influxdata.com> (@gwossum),
-             Michael Gattozzi <mgattozzi@influxdata.com> (@mgattozzi),
              Praveenkumar Hemakumar <pkumar@influxdata.com> (@praveen-influx),
-             Trevor Hilton <thilton@influxdata.com> (@hiltontj),
-             Wayne Warren <wwarren@influxdata.com> (@waynr)
+             Trevor Hilton <thilton@influxdata.com> (@hiltontj)
 GitRepo: https://github.com/influxdata/influxdata-docker
-GitCommit: 207532a59a09fc207edb19cd2187e7f33f4a474e
+GitCommit: 74f0633592894e9245520b947e1b89ccfaa14ced
 
-Tags: 1.12, 1.12.3
+Tags: 1.12, 1.12.4
 Architectures: amd64, arm64v8
 Directory: influxdb/1.12
 
-Tags: 1.12-alpine, 1.12.3-alpine
+Tags: 1.12-alpine, 1.12.4-alpine
 Architectures: amd64, arm64v8
 Directory: influxdb/1.12/alpine
 
-Tags: 1.12-data, 1.12.3-data, data
+Tags: 1.12-data, 1.12.4-data, data
 Directory: influxdb/1.12/data
 
-Tags: 1.12-data-alpine, 1.12.3-data-alpine, data-alpine
+Tags: 1.12-data-alpine, 1.12.4-data-alpine, data-alpine
 Directory: influxdb/1.12/data/alpine
 
-Tags: 1.12-meta, 1.12.3-meta, meta
+Tags: 1.12-meta, 1.12.4-meta, meta
 Directory: influxdb/1.12/meta
 
-Tags: 1.12-meta-alpine, 1.12.3-meta-alpine, meta-alpine
+Tags: 1.12-meta-alpine, 1.12.4-meta-alpine, meta-alpine
 Directory: influxdb/1.12/meta/alpine
 
 Tags: 1.11, 1.11.8
@@ -48,26 +46,26 @@ Directory: influxdb/1.11/meta
 Tags: 1.11-meta-alpine, 1.11.9-meta-alpine
 Directory: influxdb/1.11/meta/alpine
 
-Tags: 2.7, 2.7.12
-Architectures: amd64, arm64v8
-Directory: influxdb/2.7
-
-Tags: 2.7-alpine, 2.7.12-alpine
-Architectures: amd64, arm64v8
-Directory: influxdb/2.7/alpine
-
-Tags: 2, 2.8, 2.8.0, latest
+Tags: 2.8, 2.8.0
 Architectures: amd64, arm64v8
 Directory: influxdb/2.8
 
-Tags: 2-alpine, 2.8-alpine, 2.8.0-alpine, alpine
+Tags: 2.8-alpine, 2.8.0-alpine
 Architectures: amd64, arm64v8
 Directory: influxdb/2.8/alpine
 
-Tags: 3-core, 3.9-core, 3.9.0-core, core
+Tags: 2, 2.9, 2.9.0, latest
+Architectures: amd64, arm64v8
+Directory: influxdb/2.9
+
+Tags: 2-alpine, 2.9-alpine, 2.9.0-alpine, alpine
+Architectures: amd64, arm64v8
+Directory: influxdb/2.9/alpine
+
+Tags: 3-core, 3.9-core, 3.9.2-core, core
 Architectures: amd64, arm64v8
 Directory: influxdb/3.9-core
 
-Tags: 3-enterprise, 3.9-enterprise, 3.9.0-enterprise, enterprise
+Tags: 3-enterprise, 3.9-enterprise, 3.9.2-enterprise, enterprise
 Architectures: amd64, arm64v8
 Directory: influxdb/3.9-enterprise
