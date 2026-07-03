@@ -12,19 +12,19 @@ Maintainers: Amazon Linux <amazon-linux@amazon.com> (@amazonlinux),
 GitRepo: https://github.com/amazonlinux/container-images.git
 GitCommit: cc7a1876866f4056fa73a789a5b758358151c189
 
-Tags: 2023, latest, 2023.11.20260505.0
+Tags: 2023, latest, 2023.12.20260611.0
 Architectures: amd64, arm64v8
 amd64-GitFetch: refs/heads/al2023
-amd64-GitCommit: 1f96416595206d3ef5555209e7d29581a4093c0a
+amd64-GitCommit: 155ddfdddc02656a3d6695f946bb80277e432d6e
 arm64v8-GitFetch: refs/heads/al2023-arm64
-arm64v8-GitCommit: 1d65cb214a505e3d82ddc313179427658653c088
+arm64v8-GitCommit: f21c34c153c99f17b2527e034ad7cfee7aeb5dc3
 
-Tags: 2, 2.0.20260504.0
+Tags: 2, 2.0.20260615.0
 Architectures: amd64, arm64v8
 amd64-GitFetch: refs/heads/amzn2
-amd64-GitCommit: bf1cf55dbc6ff6c957e29cf0bf92c7830fbfada1
+amd64-GitCommit: 0ee39270804fae19e26aea192fc7d8adce4f7dfa
 arm64v8-GitFetch: refs/heads/amzn2-arm64
-arm64v8-GitCommit: 4420f10f28143cfa76414d95929f490f6b48e413
+arm64v8-GitCommit: 40c91041ac70ef649c2b389bcf7daea700dbb884
 
 Tags: 1, 2018.03, 2018.03.0.20231218.0
 Architectures: amd64
