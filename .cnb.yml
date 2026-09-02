@@ -1,8 +1,8 @@
 # CNB 流水线配置 - Docker 镜像同步
-# 文档: https://docs.cnb.cool/zh/build/web-trigger.html
+# 官方文档: https://docs.cnb.cool/zh/build/web-trigger.html
 
 # ============================================================
-# 1. Git 推送自动触发 - 同步 docker-images.txt 中的所有镜像
+# 1. Git 推送自动触发 - 自动同步 docker-images.txt 以及 library 全量官方镜像
 # ============================================================
 avwq_dev:
   push:
@@ -13,21 +13,59 @@ avwq_dev:
         CNB_ORG: avwq
         CNB_PROJECT: soucod/official-images
       stages:
-        - name: 同步所有镜像
+        - name: 环境准备与安装依赖
           script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
             chmod +x .cnb/scripts/*.sh
-            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3
-        - name: 更新同步 Issue
-          type: git:issue-update
-          options:
-            fromFile: SYNC_REPORT.md
-            label:
-              add: sync-report
-            state: close
-          allow_failure: true
+        - name: 1. 同步 docker-images.txt 清单镜像并生成 Issue 报告
+          script: |
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3 --continue-on-error
+        - name: 2. 同步 library 官方镜像 (全量各3个版本) 并生成 Issue 报告
+          script: |
+            bash ./.cnb/scripts/sync-library.sh --all --versions 3 --arch amd64 --skip-existing --continue-on-error
+
+master:
+  push:
+    - services:
+        - docker
+      timeout: 23h
+      env:
+        CNB_ORG: avwq
+        CNB_PROJECT: soucod/official-images
+      stages:
+        - name: 环境准备与安装依赖
+          script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
+            chmod +x .cnb/scripts/*.sh
+        - name: 1. 同步 docker-images.txt 清单镜像并生成 Issue 报告
+          script: |
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3 --continue-on-error
+        - name: 2. 同步 library 官方镜像 (全量各3个版本) 并生成 Issue 报告
+          script: |
+            bash ./.cnb/scripts/sync-library.sh --all --versions 3 --arch amd64 --skip-existing --continue-on-error
+
+main:
+  push:
+    - services:
+        - docker
+      timeout: 23h
+      env:
+        CNB_ORG: avwq
+        CNB_PROJECT: soucod/official-images
+      stages:
+        - name: 环境准备与安装依赖
+          script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
+            chmod +x .cnb/scripts/*.sh
+        - name: 1. 同步 docker-images.txt 清单镜像并生成 Issue 报告
+          script: |
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3 --continue-on-error
+        - name: 2. 同步 library 官方镜像 (全量各3个版本) 并生成 Issue 报告
+          script: |
+            bash ./.cnb/scripts/sync-library.sh --all --versions 3 --arch amd64 --skip-existing --continue-on-error
 
 # ============================================================
-# Issue 驱动同步 - 创建带 sync 标签的 Issue 自动触发
+# 2. Issue 驱动同步 - 创建带 sync 标签的 Issue 自动触发并评论报告
 # ============================================================
 $:
   issue.open:
@@ -40,38 +78,35 @@ $:
         CNB_ORG: avwq
         CNB_PROJECT: soucod/official-images
       stages:
-        - name: Issue 触发同步
+        - name: 环境准备
           script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
             chmod +x .cnb/scripts/*.sh
             echo "=========================================="
             echo "Issue #$CNB_ISSUE_IID: $CNB_ISSUE_TITLE"
             echo "=========================================="
-            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3
-        - name: 更新 Issue 状态
-          type: git:issue-update
-          options:
-            fromFile: SYNC_REPORT.md
-            label:
-              add: completed
-              remove: sync
-            state: close
-          allow_failure: true
+        - name: Issue 触发同步并回复报告
+          script: |
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch amd64 --skip-existing --parallel 3 --continue-on-error
 
 # ============================================================
-# Web 手动触发 - 所有分支可用
+# 3. Web 手动触发 - 对应 .cnb/web_trigger.yml 中配置的按钮事件
 # ============================================================
 "**":
-  # 同步单个镜像
-  sync_single_image:
+  # 按钮 1: 同步单个镜像
+  web_trigger_sync_single_image:
     - services:
         - docker
       env:
         CNB_ORG: avwq
         CNB_PROJECT: soucod/official-images
       stages:
+        - name: 环境准备
+          script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
+            chmod +x .cnb/scripts/*.sh
         - name: 同步指定镜像
           script: |
-            chmod +x .cnb/scripts/*.sh
             echo "同步镜像: ${IMAGE_NAME}:${IMAGE_TAG:-latest}"
             echo "平台: ${IMAGE_PLATFORM:-docker.io}"
             echo "架构: ${IMAGE_ARCH:-amd64}"
@@ -79,51 +114,83 @@ $:
               --platform "${IMAGE_PLATFORM:-docker.io}" \
               --arch "${IMAGE_ARCH:-amd64}"
 
-  # 同步所有镜像
-  sync_all_images:
+  # 按钮 2: 同步 docker-images.txt 全部镜像
+  web_trigger_sync_all_images:
     - services:
         - docker
       env:
         CNB_ORG: avwq
         CNB_PROJECT: soucod/official-images
       stages:
-        - name: 同步全部镜像
+        - name: 环境准备
           script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
             chmod +x .cnb/scripts/*.sh
-            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch "${SYNC_ARCH:-amd64}" --parallel 3
+        - name: 同步全部清单镜像并发布 Issue 报告
+          script: |
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch "${SYNC_ARCH:-amd64}" --parallel 3 --continue-on-error
 
-  # 同步指定文件
-  sync_from_custom_file:
+  # 按钮 3: 同步指定文件
+  web_trigger_sync_from_custom_file:
     - services:
         - docker
       env:
         CNB_ORG: avwq
         CNB_PROJECT: soucod/official-images
       stages:
+        - name: 环境准备
+          script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
+            chmod +x .cnb/scripts/*.sh
         - name: 同步指定文件中的镜像
           script: |
-            chmod +x .cnb/scripts/*.sh
             FILE_PATH="${CUSTOM_FILE:-docker-images.txt}"
             if [ ! -f "$FILE_PATH" ]; then
               echo "错误: 文件不存在: $FILE_PATH"
               exit 1
             fi
-            bash ./.cnb/scripts/sync-from-file.sh "$FILE_PATH" --arch "${SYNC_ARCH:-amd64}" --parallel 3
+            bash ./.cnb/scripts/sync-from-file.sh "$FILE_PATH" --arch "${SYNC_ARCH:-amd64}" --parallel 3 --continue-on-error
 
-  # 同步 library 单个镜像
-  sync_library_image:
+  # 按钮 4: 同步 library 单个镜像
+  web_trigger_sync_library_image:
     - services:
         - docker
       env:
         CNB_ORG: avwq
         CNB_PROJECT: soucod/official-images
       stages:
+        - name: 环境准备
+          script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
+            chmod +x .cnb/scripts/*.sh
         - name: 同步 library 镜像
           script: |
-            chmod +x .cnb/scripts/*.sh
-            echo "同步 library 镜像: ${LIB_IMAGE_NAME}"
-            echo "版本数量: ${VERSION_COUNT:-5}"
+            echo "同步 library 官方镜像: ${LIB_IMAGE_NAME}"
+            echo "版本数量: ${VERSION_COUNT:-3}"
             echo "架构: ${SYNC_ARCH:-amd64}"
             bash ./.cnb/scripts/sync-library.sh "${LIB_IMAGE_NAME}" \
-              --versions "${VERSION_COUNT:-5}" \
-              --arch "${SYNC_ARCH:-amd64}"
+              --versions "${VERSION_COUNT:-3}" \
+              --arch "${SYNC_ARCH:-amd64}" \
+              --skip-existing \
+              --continue-on-error
+
+  # 按钮 5: 全量同步 library 所有官方镜像
+  web_trigger_sync_all_library:
+    - services:
+        - docker
+      env:
+        CNB_ORG: avwq
+        CNB_PROJECT: soucod/official-images
+      stages:
+        - name: 环境准备
+          script: |
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
+            chmod +x .cnb/scripts/*.sh
+        - name: 全量同步 library 所有镜像并发布 Issue 报告
+          script: |
+            echo "全量同步所有 library 镜像，每镜像版本数: ${VERSION_COUNT:-3}"
+            bash ./.cnb/scripts/sync-library.sh --all \
+              --versions "${VERSION_COUNT:-3}" \
+              --arch "${SYNC_ARCH:-amd64}" \
+              --skip-existing \
+              --continue-on-error

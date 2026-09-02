@@ -5,11 +5,11 @@
 #   bash sync-from-file.sh [文件路径] [选项]
 #
 # 选项:
-#   --arch ARCH        架构 (默认: amd64)
-#   --parallel N       并行数量 (默认: 3)
-#   --skip-existing    跳过已存在的镜像
-#   --dry-run          仅打印，不执行
-#   --create-issue     创建 Issue 记录结果
+#   --arch ARCH            架构 (默认: amd64)
+#   --parallel N           并行数量 (默认: 3)
+#   --skip-existing        跳过已存在的镜像
+#   --continue-on-error    即便有部分镜像失败也生成报告并不以错误退出
+#   --dry-run              仅打印，不执行
 
 set -euo pipefail
 
@@ -21,7 +21,7 @@ else
 fi
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-# 加载报告生成助手
+# 加载报告生成助手与 Issue 操作助手
 source "${SCRIPT_DIR}/issue-helper.sh" 2>/dev/null || true
 
 # 颜色输出
@@ -42,6 +42,7 @@ ARCH="amd64"
 PARALLEL=3
 DRY_RUN=false
 SKIP_EXISTING=false
+CONTINUE_ON_ERROR=false
 
 # 同步结果文件
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
@@ -55,11 +56,12 @@ usage() {
 用法: bash $0 [文件路径] [选项]
 
 选项:
-  --arch ARCH        架构 (默认: amd64)
-  --parallel N       并行数量 (默认: 3)
-  --skip-existing    跳过已存在的镜像
-  --dry-run          仅打印，不执行
-  -h, --help         显示帮助
+  --arch ARCH            架构 (默认: amd64)
+  --parallel N           并行数量 (默认: 3)
+  --skip-existing        跳过已存在的镜像
+  --continue-on-error    即便有部分镜像失败也记录报告并正常退出 (退出码 0)
+  --dry-run              仅打印，不执行
+  -h, --help             显示帮助
 EOF
     exit 0
 }
@@ -72,6 +74,7 @@ while [[ $# -gt 0 ]]; do
         --parallel) PARALLEL="$2"; shift 2 ;;
         --dry-run) DRY_RUN=true; shift ;;
         --skip-existing) SKIP_EXISTING=true; shift ;;
+        --continue-on-error|--ignore-errors) CONTINUE_ON_ERROR=true; shift ;;
         -h|--help) usage ;;
         -*) log_error "未知选项: $1"; exit 1 ;;
         *) IMAGE_FILE="$1"; shift ;;
@@ -113,6 +116,7 @@ log_info "有效镜像: $IMAGE_COUNT 个"
 log_info "架构:     $ARCH"
 log_info "并行数:   $PARALLEL"
 log_info "跳过已存在: $SKIP_EXISTING"
+log_info "容错继续模式: $CONTINUE_ON_ERROR"
 log_info "========================================"
 
 # 同步单个镜像
@@ -167,19 +171,41 @@ log_info "========================================"
 REPORT_FILE="${PROJECT_DIR}/SYNC_REPORT.md"
 log_info "生成同步报告: $REPORT_FILE"
 
-{
-    generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" "$IMAGE_FILE"
-} > "$REPORT_FILE" 2>/dev/null || true
-
-# Issue 处理由 CNB 内置任务 git:issue-update 完成
-# 脚本只负责生成 SYNC_REPORT.md 文件
-log_info "同步报告已生成，Issue 更新由 CNB 内置任务处理"
+generate_sync_report "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST" "$ARCH" "$START_TIME" "$IMAGE_FILE" > "$REPORT_FILE" 2>/dev/null || true
 
 log_info "报告已生成: $REPORT_FILE"
+
+# 自动上报到 CNB Issues
+if [[ -n "${CNB_TOKEN:-}" ]]; then
+    log_info "正在将同步报告提交到 CNB Issues..."
+    REPORT_BODY=$(cat "$REPORT_FILE" 2>/dev/null || echo "同步完成")
+    
+    if [[ -n "${CNB_ISSUE_IID:-}" ]]; then
+        # 场景 A: 由 Issue 触发的同步，回复评论并在全部成功时关闭
+        log_info "更新触发源 Issue #$CNB_ISSUE_IID"
+        issue_comment "$CNB_ISSUE_IID" "$REPORT_BODY"
+        if [[ $FAILED_COUNT -eq 0 ]]; then
+            issue_close "$CNB_ISSUE_IID"
+        fi
+    else
+        # 场景 B: 由 Push / Web 触发，新建一个 Issue 记录报告
+        local status_tag="✅"
+        [[ $FAILED_COUNT -gt 0 ]] && status_tag="⚠️"
+        local issue_title="${status_tag} [Docker 同步报告] 成功:${SUCCESS_COUNT} / 跳过:${SKIPPED_COUNT} / 失败:${FAILED_COUNT} (${START_TIME})"
+        issue_create "$issue_title" "$REPORT_BODY"
+    fi
+else
+    log_warn "未检测到 CNB_TOKEN，跳过 Issue 报告创建"
+fi
 
 # 清理临时文件
 rm -f "$SUCCESS_LIST" "$FAILED_LIST" "$SKIPPED_LIST"
 
-# 返回退出码
-[[ $FAILED_COUNT -gt 0 ]] && exit 1
-exit 0
+# 根据容错模式决定退出码
+if [[ "$CONTINUE_ON_ERROR" == true ]]; then
+    log_info "容错模式启用，流水线正常结束 (退出码 0)"
+    exit 0
+else
+    [[ $FAILED_COUNT -gt 0 ]] && exit 1
+    exit 0
+fi
