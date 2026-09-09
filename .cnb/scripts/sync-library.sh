@@ -10,15 +10,15 @@
 # 选项:
 #   --versions N           同步最近 N 个主版本 (默认: 3)
 #   --all-versions         同步所有版本
-#   --all                  同步所有镜像
+#   --all                  同步所有官方镜像
 #   --arch ARCH            架构 (默认: amd64)
+#   --parallel N           并行数量 (默认: 3)
 #   --skip-existing        跳过已存在于 CNB 仓库的镜像 (默认开启)
 #   --continue-on-error    即便有部分镜像失败也生成报告并正常退出
 #   --dry-run              仅打印，不执行
 
 set -euo pipefail
 
-# 获取脚本目录
 if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 else
@@ -44,12 +44,13 @@ log_step() { echo -e "${BLUE}[STEP]${NC} $*"; }
 
 # 默认配置
 CNB_REGISTRY="${CNB_REGISTRY:-docker.cnb.cool}"
-CNB_ORG="${CNB_ORG:-}"
-CNB_PROJECT="${CNB_PROJECT:-}"
+CNB_ORG="${CNB_ORG:-avwq}"
+CNB_PROJECT="${CNB_PROJECT:-soucod/official-images}"
 VERSION_COUNT=3
 ALL_VERSIONS=false
 SYNC_ALL=false
 ARCH="amd64"
+PARALLEL=3
 DRY_RUN=false
 SKIP_EXISTING=true
 CONTINUE_ON_ERROR=false
@@ -77,6 +78,7 @@ usage() {
   --all-versions         同步所有版本
   --all                  同步所有官方镜像
   --arch ARCH            架构 (默认: amd64)
+  --parallel N           并行并发数 (默认: 3)
   --skip-existing        跳过已存在的镜像 (默认开启)
   --continue-on-error    容错模式，即便失败也正常退出
   --dry-run              仅打印，不执行
@@ -133,86 +135,33 @@ get_version_tag() {
     echo "$tags" | grep "^${major}" | head -1
 }
 
-# 同步单个镜像
-sync_image() {
-    local image_name="$1"
-    local lib_file="${LIBRARY_DIR}/${image_name}"
+# 同步单个镜像版本
+sync_single_target() {
+    local full_img="$1"
+    local idx="$2"
+    local result=0
 
-    if [[ ! -f "$lib_file" ]]; then
-        log_error "library 文件不存在: $lib_file"
-        return 1
-    fi
+    local sync_args=(--arch "$ARCH")
+    [[ "$DRY_RUN" == true ]] && sync_args+=(--dry-run)
+    [[ "$SKIP_EXISTING" == true ]] && sync_args+=(--skip-existing)
 
-    log_info "========================================"
-    log_info "处理官方镜像: $image_name"
-    log_info "========================================"
+    log_step "[$idx] 开始同步: $full_img"
+    bash "${SCRIPT_DIR}/sync-image.sh" "$full_img" "${sync_args[@]}" 2>&1 || result=$?
 
-    local all_tags
-    all_tags=$(extract_tags "$lib_file" "$ARCH")
-
-    if [[ -z "$all_tags" ]]; then
-        log_warn "未找到适用于 $ARCH 架构的 tags: $image_name"
-        return 0
-    fi
-
-    local major_versions
-    major_versions=$(extract_major_versions "$all_tags")
-
-    local versions_to_sync
-    if [[ "$ALL_VERSIONS" == true ]]; then
-        versions_to_sync="$major_versions"
+    if [[ $result -eq 0 ]]; then
+        echo "$full_img" >> "$SUCCESS_LIST"
+        log_info "[$idx] ✓ 成功: $full_img"
+    elif [[ $result -eq 2 ]]; then
+        echo "$full_img" >> "$SKIPPED_LIST"
+        log_info "[$idx] ⊘ 跳过: $full_img"
     else
-        versions_to_sync=$(echo "$major_versions" | head -n "$VERSION_COUNT")
+        echo "$full_img" >> "$FAILED_LIST"
+        log_error "[$idx] ✗ 失败: $full_img"
     fi
-
-    local sync_opts="--arch $ARCH"
-    [[ "$DRY_RUN" == true ]] && sync_opts="$sync_opts --dry-run"
-    [[ "$SKIP_EXISTING" == true ]] && sync_opts="$sync_opts --skip-existing"
-
-    local sync_count=0
-    while IFS= read -r major; do
-        [[ -z "$major" ]] && continue
-
-        local tag
-        tag=$(get_version_tag "$all_tags" "$major")
-        [[ -z "$tag" ]] && continue
-
-        sync_count=$((sync_count + 1))
-        local full_img="${image_name}:${tag}"
-        log_step "[$sync_count] 同步: $full_img"
-
-        local result=0
-        bash "${SCRIPT_DIR}/sync-image.sh" "$full_img" $sync_opts 2>&1 || result=$?
-
-        if [[ $result -eq 0 ]]; then
-            echo "$full_img" >> "$SUCCESS_LIST"
-            log_info "✓ 成功: $full_img"
-        elif [[ $result -eq 2 ]]; then
-            echo "$full_img" >> "$SKIPPED_LIST"
-            log_info "⊘ 跳过: $full_img"
-        else
-            echo "$full_img" >> "$FAILED_LIST"
-            log_error "✗ 失败: $full_img"
-        fi
-    done <<< "$versions_to_sync"
-
-    # 检查并同步 latest 标签
-    if echo "$all_tags" | grep -q "^latest$"; then
-        local latest_img="${image_name}:latest"
-        log_step "同步: $latest_img"
-        local result=0
-        bash "${SCRIPT_DIR}/sync-image.sh" "$latest_img" $sync_opts 2>&1 || result=$?
-        if [[ $result -eq 0 ]]; then
-            echo "$latest_img" >> "$SUCCESS_LIST"
-        elif [[ $result -eq 2 ]]; then
-            echo "$latest_img" >> "$SKIPPED_LIST"
-        else
-            echo "$latest_img" >> "$FAILED_LIST"
-        fi
-    fi
-
-    log_info "✓ ${image_name} 处理完成 (已扫描 $sync_count 个主版本)"
 }
+
+export -f sync_single_target log_info log_warn log_error log_step
+export SCRIPT_DIR SUCCESS_LIST FAILED_LIST SKIPPED_LIST GREEN YELLOW RED BLUE NC ARCH DRY_RUN SKIP_EXISTING
 
 # 主逻辑
 main() {
@@ -234,6 +183,10 @@ main() {
                 ;;
             --arch)
                 ARCH="$2"
+                shift 2
+                ;;
+            --parallel)
+                PARALLEL="$2"
                 shift 2
                 ;;
             --skip-existing)
@@ -266,17 +219,11 @@ main() {
         esac
     done
 
-    # 自动检测 CNB 环境变量
     if [[ -z "$CNB_ORG" ]] && [[ -n "${CNB_REPO_SLUG:-}" ]]; then
         CNB_ORG="${CNB_REPO_SLUG%%/*}"
     fi
     if [[ -z "$CNB_PROJECT" ]] && [[ -n "${CNB_REPO_SLUG:-}" ]]; then
         CNB_PROJECT="${CNB_REPO_SLUG#*/}"
-    fi
-
-    if [[ -z "$CNB_ORG" ]] || [[ -z "$CNB_PROJECT" ]]; then
-        log_error "CNB_ORG 和 CNB_PROJECT 必须设置"
-        exit 1
     fi
 
     # 初始化临时文件
@@ -298,18 +245,59 @@ main() {
     log_info "Library 官方镜像同步"
     log_info "========================================"
     log_info "目标仓库: ${CNB_REGISTRY}/${CNB_ORG}/${CNB_PROJECT}/"
-    log_info "架构: $ARCH"
+    log_info "架构:     $ARCH"
     log_info "版本数量: $([[ "$ALL_VERSIONS" == true ]] && echo "全部" || echo "$VERSION_COUNT")"
     log_info "镜像数量: ${#images[@]}"
+    log_info "并行并发: $PARALLEL"
     log_info "跳过已存在: $SKIP_EXISTING"
     log_info "容错继续模式: $CONTINUE_ON_ERROR"
     log_info "========================================"
 
-    # 同步每个镜像
+    # 收集全部需要同步的目标镜像 tag
+    local targets_to_sync=()
     for image_name in "${images[@]}"; do
-        sync_image "$image_name"
-        echo ""
+        local lib_file="${LIBRARY_DIR}/${image_name}"
+        [[ ! -f "$lib_file" ]] && continue
+
+        local all_tags
+        all_tags=$(extract_tags "$lib_file" "$ARCH")
+        [[ -z "$all_tags" ]] && continue
+
+        local major_versions
+        major_versions=$(extract_major_versions "$all_tags")
+
+        local versions_to_sync
+        if [[ "$ALL_VERSIONS" == true ]]; then
+            versions_to_sync="$major_versions"
+        else
+            versions_to_sync=$(echo "$major_versions" | head -n "$VERSION_COUNT")
+        fi
+
+        while IFS= read -r major; do
+            [[ -z "$major" ]] && continue
+            local tag
+            tag=$(get_version_tag "$all_tags" "$major")
+            [[ -n "$tag" ]] && targets_to_sync+=("${image_name}:${tag}")
+        done <<< "$versions_to_sync"
+
+        if echo "$all_tags" | grep -q "^latest$"; then
+            targets_to_sync+=("${image_name}:latest")
+        fi
     done
+
+    local total_targets=${#targets_to_sync[@]}
+    log_info "已解析出 $total_targets 个待同步的镜像版本标签"
+
+    local sync_opts="--arch $ARCH"
+    [[ "$DRY_RUN" == true ]] && sync_opts="$sync_opts --dry-run"
+    [[ "$SKIP_EXISTING" == true ]] && sync_opts="$sync_opts --skip-existing"
+
+    # 并行执行同步
+    local idx=0
+    for full_img in "${targets_to_sync[@]}"; do
+        idx=$((idx + 1))
+        echo "$idx $full_img"
+    done | xargs -P "$PARALLEL" -L 1 bash -c 'sync_single_target "$2" "$1"' _
 
     # 统计
     local success_count=$(wc -l < "$SUCCESS_LIST" 2>/dev/null | tr -d ' ' || echo 0)
