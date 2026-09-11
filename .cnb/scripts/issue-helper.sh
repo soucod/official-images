@@ -238,7 +238,7 @@ generate_sync_report() {
     
     local status_badge="✅ 同步全部成功"
     if [[ $failed_count -gt 0 ]]; then
-        status_badge="⚠️ 存在部分同步失败 ($failed_count 个)"
+        status_badge="⚠️ 部分镜像未同步成功 ($failed_count 个已记录)"
     fi
 
     cat << EOF
@@ -263,7 +263,7 @@ generate_sync_report() {
 | :--- | :--- | :--- |
 | ✅ **同步成功** | **$success_count** | 已成功推送到 CNB 制品库 |
 | ⊘ **跳过存在** | **$skipped_count** | 目标镜像已存在，自动跳过 |
-| ❌ **同步失败** | **$failed_count** | 拉取或推送失败（详见下表） |
+| ❌ **未成功镜像** | **$failed_count** | 源镜像不存在或同步未成功（已跳过并汇总于下表） |
 | 📦 **总计镜像** | **$total** | 本次同步处理的镜像总数 |
 
 ---
@@ -272,9 +272,9 @@ EOF
 
     # 失败列表 (有失败时优先高亮展开展示)
     if [[ -s "$failed_file" ]]; then
-        echo "## ❌ 失败镜像清单 ($failed_count 个)"
+        echo "## ❌ 未成功镜像清单 ($failed_count 个)"
         echo ""
-        echo "> 💡 提示：失败通常是由于上游 Tag 404 不存在、古老 Schema 1 协议废弃或并发限流导致。"
+        echo "> 💡 提示：以下镜像未同步成功（通常为上游源镜像不存在对应 Tag、已被删除或网络异常），同步流程已自动跳过并在此汇总记录。"
         echo ""
         echo "| # | 镜像全称 |"
         echo "| :---: | :--- |"

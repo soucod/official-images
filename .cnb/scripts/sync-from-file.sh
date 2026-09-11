@@ -132,12 +132,12 @@ sync_single() {
     if [[ $result -eq 0 ]]; then
         echo "$image" >> "$SUCCESS_LIST"
         log_info "[$idx] ✓ 成功: $image"
-    elif [[ $result -eq 2 ]]; then
+    elif [[ $result -eq 100 ]]; then
         echo "$image" >> "$SKIPPED_LIST"
         log_info "[$idx] ⊘ 跳过: $image"
     else
         echo "$image" >> "$FAILED_LIST"
-        log_error "[$idx] ✗ 失败: $image"
+        log_warn "[$idx] ✗ 未同步成功 (已跳过并记录): $image"
     fi
 }
 
@@ -150,7 +150,7 @@ idx=0
 echo "$IMAGES" | while read -r image; do
     idx=$((idx + 1))
     echo "$idx $image"
-done | xargs -P "$PARALLEL" -L 1 bash -c 'sync_single "$2" "$1"' _
+done | xargs -P "$PARALLEL" -L 1 bash -c 'sync_single "$2" "$1"' _ || true
 
 # 统计结果
 SUCCESS_COUNT=$(wc -l < "$SUCCESS_LIST" 2>/dev/null | tr -d ' ' || echo 0)
@@ -163,8 +163,8 @@ log_info "同步完成!"
 log_info "========================================"
 log_info "总计:   $TOTAL"
 log_info "成功:   $SUCCESS_COUNT"
-log_info "跳过:   $SKIPPED_COUNT"
-log_info "失败:   $FAILED_COUNT"
+log_info "已存在: $SKIPPED_COUNT"
+log_info "未成功: $FAILED_COUNT"
 log_info "========================================"
 
 # 生成同步报告文件
@@ -189,9 +189,9 @@ if [[ -n "${CNB_TOKEN:-}" ]]; then
         fi
     else
         # 场景 B: 由 Push / Web 触发，新建一个 Issue 记录报告
-        local status_tag="✅"
+        status_tag="✅"
         [[ $FAILED_COUNT -gt 0 ]] && status_tag="⚠️"
-        local issue_title="${status_tag} [Docker 同步报告] 成功:${SUCCESS_COUNT} / 跳过:${SKIPPED_COUNT} / 失败:${FAILED_COUNT} (${START_TIME})"
+        issue_title="${status_tag} [Docker 同步报告] 成功:${SUCCESS_COUNT} / 跳过:${SKIPPED_COUNT} / 未成功:${FAILED_COUNT} (${START_TIME})"
         issue_create "$issue_title" "$REPORT_BODY"
     fi
 else

@@ -151,7 +151,7 @@ sync_single_target() {
     if [[ $result -eq 0 ]]; then
         echo "$full_img" >> "$SUCCESS_LIST"
         log_info "[$idx] ✓ 成功: $full_img"
-    elif [[ $result -eq 2 ]]; then
+    elif [[ $result -eq 100 ]]; then
         echo "$full_img" >> "$SKIPPED_LIST"
         log_info "[$idx] ⊘ 跳过: $full_img"
     else

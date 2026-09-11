@@ -264,7 +264,7 @@ main() {
     if [[ "$SKIP_EXISTING" == true ]] && [[ "$DRY_RUN" != true ]]; then
         if check_image_exists "$target_image"; then
             log_info "⊘ 镜像已存在，跳过: $target_image"
-            exit 2
+            exit 100
         fi
     fi
 
