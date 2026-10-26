@@ -83,6 +83,18 @@ done
 
 IMAGE_FILE="${IMAGE_FILE:-$DEFAULT_FILE}"
 
+# 检查依赖 (跨容器 Stage 自检)
+ensure_dependencies() {
+    if ! command -v skopeo &>/dev/null || ! command -v jq &>/dev/null; then
+        log_info "检测到缺少 skopeo 或 jq，正在自动安装必要依赖..."
+        if command -v apt-get &>/dev/null; then
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
+        fi
+    fi
+}
+
+ensure_dependencies
+
 # 检查文件
 if [[ ! -f "$IMAGE_FILE" ]]; then
     log_warn "镜像列表文件不存在: $IMAGE_FILE"
@@ -123,11 +135,22 @@ log_info "========================================"
 sync_single() {
     local image="$1"
     local idx="$2"
+    local force_update="${3:-false}"
     local result=0
     
-    log_step "[$idx] 开始: $image"
+    local sync_args=(--arch "$ARCH")
+    [[ "$DRY_RUN" == true ]] && sync_args+=(--dry-run)
+    if [[ "$force_update" == "true" ]]; then
+        sync_args+=(--force)
+        log_step "[$idx] 开始 (强制更新最新版本): $image"
+    elif [[ "$SKIP_EXISTING" == true ]]; then
+        sync_args+=(--skip-existing)
+        log_step "[$idx] 开始 (历史版本，已存在则跳过): $image"
+    else
+        log_step "[$idx] 开始: $image"
+    fi
     
-    bash "${SCRIPT_DIR}/sync-image.sh" "$image" $SYNC_OPTS 2>&1 || result=$?
+    bash "${SCRIPT_DIR}/sync-image.sh" "$image" "${sync_args[@]}" 2>&1 || result=$?
     
     if [[ $result -eq 0 ]]; then
         echo "$image" >> "$SUCCESS_LIST"
@@ -142,15 +165,48 @@ sync_single() {
 }
 
 export -f sync_single log_info log_warn log_error log_step
-export SCRIPT_DIR SYNC_OPTS SUCCESS_LIST FAILED_LIST SKIPPED_LIST
+export SCRIPT_DIR SUCCESS_LIST FAILED_LIST SKIPPED_LIST ARCH DRY_RUN SKIP_EXISTING
 export GREEN YELLOW RED BLUE NC
 
 # 并行执行
+# 规则: latest 标签及每个镜像仓库最新的 5 个标签始终强制更新 (force=true)；
+# 第 6 个及更早的历史版本，若启用了 --skip-existing 则跳过已存在的镜像 (force=false)。
 idx=0
-echo "$IMAGES" | while read -r image; do
+declare -A repo_tag_count
+tasks=()
+while IFS= read -r image; do
+    [[ -z "$image" ]] && continue
     idx=$((idx + 1))
-    echo "$idx $image"
-done | xargs -P "$PARALLEL" -L 1 bash -c 'sync_single "$2" "$1"' _ || true
+
+    repo=""
+    tag="latest"
+    if [[ "$image" == *":"* ]]; then
+        repo="${image%:*}"
+        tag="${image##*:}"
+    else
+        repo="$image"
+    fi
+
+    force=false
+    if [[ "$tag" == "latest" ]]; then
+        force=true
+    else
+        cnt=${repo_tag_count["$repo"]:-0}
+        cnt=$((cnt + 1))
+        repo_tag_count["$repo"]=$cnt
+        if [[ $cnt -le 5 ]]; then
+            force=true
+        else
+            force=false
+        fi
+    fi
+
+    tasks+=("$idx $image $force")
+done <<< "$IMAGES"
+
+for task in "${tasks[@]}"; do
+    echo "$task"
+done | xargs -P "$PARALLEL" -L 1 bash -c 'sync_single "$2" "$1" "$3"' _ || true
 
 # 统计结果
 SUCCESS_COUNT=$(wc -l < "$SUCCESS_LIST" 2>/dev/null | tr -d ' ' || echo 0)

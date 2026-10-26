@@ -42,6 +42,7 @@ DEFAULT_TAG="latest"
 DEFAULT_ARCH="amd64"
 DRY_RUN=false
 SKIP_EXISTING=false
+FORCE=false
 
 # 参数解析
 IMAGE=""
@@ -64,7 +65,8 @@ usage() {
   --tag TAG          镜像标签 (默认从镜像名解析)
   --arch ARCH        架构 (默认: amd64)
   --platform PLAT    源平台 (默认: docker.io)
-  --skip-existing    如果目标镜像已存在则跳过 (返回码 2)
+  --skip-existing    如果目标镜像已存在则跳过 (返回码 100，latest 标签除外)
+  --force            强制更新，跳过存在性检查
   --dry-run          仅打印命令，不执行
   -h, --help         显示帮助
 
@@ -220,6 +222,7 @@ main() {
             --platform) PLATFORM="$2"; shift 2 ;;
             --dry-run) DRY_RUN=true; shift ;;
             --skip-existing) SKIP_EXISTING=true; shift ;;
+            --force) FORCE=true; shift ;;
             -h|--help) usage ;;
             -*) log_error "未知选项: $1"; exit 1 ;;
             *)
@@ -260,9 +263,13 @@ main() {
         log_warn "[DRY-RUN] 以下命令不会实际执行"
     fi
 
-    # 检查是否跳过已存在的镜像
-    if [[ "$SKIP_EXISTING" == true ]] && [[ "$DRY_RUN" != true ]]; then
-        if check_image_exists "$target_image"; then
+    # 检查是否跳过已存在的镜像 (latest 标签与 --force 除外，强制更新)
+    if [[ "$FORCE" == true ]]; then
+        log_info "ℹ 强制更新模式已启用: $target_image"
+    elif [[ "$SKIP_EXISTING" == true ]] && [[ "$DRY_RUN" != true ]]; then
+        if [[ "$TAG" == "latest" ]]; then
+            log_info "ℹ 目标镜像为 latest 标签，强制同步更新 (不跳过)"
+        elif check_image_exists "$target_image"; then
             log_info "⊘ 镜像已存在，跳过: $target_image"
             exit 100
         fi

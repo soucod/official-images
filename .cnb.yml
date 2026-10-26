@@ -128,7 +128,7 @@ $:
             chmod +x .cnb/scripts/*.sh
         - name: 同步全部清单镜像并发布 Issue 报告
           script: |
-            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch "${SYNC_ARCH:-amd64}" --parallel 3 --continue-on-error
+            bash ./.cnb/scripts/sync-from-file.sh docker-images.txt --arch "${SYNC_ARCH:-amd64}" --skip-existing --parallel 3 --continue-on-error
 
   # 按钮 3: 同步指定文件
   web_trigger_sync_from_custom_file:
@@ -149,7 +149,7 @@ $:
               echo "错误: 文件不存在: $FILE_PATH"
               exit 1
             fi
-            bash ./.cnb/scripts/sync-from-file.sh "$FILE_PATH" --arch "${SYNC_ARCH:-amd64}" --parallel 3 --continue-on-error
+            bash ./.cnb/scripts/sync-from-file.sh "$FILE_PATH" --arch "${SYNC_ARCH:-amd64}" --skip-existing --parallel 3 --continue-on-error
 
   # 按钮 4: 同步 library 单个镜像
   web_trigger_sync_library_image:
@@ -171,6 +171,7 @@ $:
             bash ./.cnb/scripts/sync-library.sh "${LIB_IMAGE_NAME}" \
               --versions "${VERSION_COUNT:-3}" \
               --arch "${SYNC_ARCH:-amd64}" \
+              --skip-existing \
               --continue-on-error
 
   # 按钮 5: 全量同步 library 所有官方镜像
@@ -191,4 +192,5 @@ $:
             bash ./.cnb/scripts/sync-library.sh --all \
               --versions "${VERSION_COUNT:-3}" \
               --arch "${SYNC_ARCH:-amd64}" \
+              --skip-existing \
               --continue-on-error

@@ -87,6 +87,16 @@ EOF
     exit 0
 }
 
+# 检查依赖 (跨容器 Stage 自检)
+ensure_dependencies() {
+    if ! command -v skopeo &>/dev/null || ! command -v jq &>/dev/null; then
+        log_info "检测到缺少 skopeo 或 jq，正在自动安装必要依赖..."
+        if command -v apt-get &>/dev/null; then
+            apt-get update && apt-get install -y skopeo curl python3 jq || true
+        fi
+    fi
+}
+
 # 从 library 文件中提取 Tags
 extract_tags() {
     local lib_file="$1"
@@ -116,36 +126,57 @@ extract_tags() {
     done < "$lib_file"
 }
 
-# 从 tags 列表中提取主版本号并排序
+# 从 tags 列表中提取主版本号并排序 (纯 Bash 避免 SIGPIPE)
 extract_major_versions() {
     local tags="$1"
+    local majors=""
 
-    echo "$tags" | while read -r tag; do
+    while IFS= read -r tag; do
         if [[ "$tag" =~ ^([0-9]+) ]]; then
-            echo "${BASH_REMATCH[1]}"
+            majors+="${BASH_REMATCH[1]}"$'\n'
         fi
-    done | sort -rn | uniq
+    done <<< "$tags"
+
+    if [[ -n "$majors" ]]; then
+        echo -n "$majors" | sort -rn -u
+    fi
 }
 
-# 获取指定主版本的第一个 tag
+# 获取指定主版本的第一个 tag (纯 Bash 遍历，彻底杜绝管道中断 SIGPIPE 141)
 get_version_tag() {
     local tags="$1"
     local major="$2"
 
-    echo "$tags" | grep "^${major}" | head -1
+    while IFS= read -r tag; do
+        if [[ "$tag" =~ ^${major}(\.|$|-) ]]; then
+            echo "$tag"
+            return 0
+        elif [[ "$tag" == "${major}"* ]]; then
+            echo "$tag"
+            return 0
+        fi
+    done <<< "$tags"
 }
 
 # 同步单个镜像版本
 sync_single_target() {
     local full_img="$1"
     local idx="$2"
+    local force_update="${3:-false}"
     local result=0
 
     local sync_args=(--arch "$ARCH")
     [[ "$DRY_RUN" == true ]] && sync_args+=(--dry-run)
-    [[ "$SKIP_EXISTING" == true ]] && sync_args+=(--skip-existing)
+    if [[ "$force_update" == "true" ]]; then
+        sync_args+=(--force)
+        log_step "[$idx] 开始同步 (强制更新最新版本): $full_img"
+    elif [[ "$SKIP_EXISTING" == true ]]; then
+        sync_args+=(--skip-existing)
+        log_step "[$idx] 开始同步 (历史版本，已存在则跳过): $full_img"
+    else
+        log_step "[$idx] 开始同步: $full_img"
+    fi
 
-    log_step "[$idx] 开始同步: $full_img"
     bash "${SCRIPT_DIR}/sync-image.sh" "$full_img" "${sync_args[@]}" 2>&1 || result=$?
 
     if [[ $result -eq 0 ]]; then
@@ -219,6 +250,8 @@ main() {
         esac
     done
 
+    ensure_dependencies
+
     if [[ -z "$CNB_ORG" ]] && [[ -n "${CNB_REPO_SLUG:-}" ]]; then
         CNB_ORG="${CNB_REPO_SLUG%%/*}"
     fi
@@ -254,6 +287,8 @@ main() {
     log_info "========================================"
 
     # 收集全部需要同步的目标镜像 tag
+    # 规则: latest 标签以及每个镜像最新的 5 个标签始终强制更新 (force=true)；
+    # 超过 5 个标签的更早历史版本，若启用了 --skip-existing 则跳过已存在的镜像 (force=false)。
     local targets_to_sync=()
     for image_name in "${images[@]}"; do
         local lib_file="${LIBRARY_DIR}/${image_name}"
@@ -266,38 +301,50 @@ main() {
         local major_versions
         major_versions=$(extract_major_versions "$all_tags")
 
-        local versions_to_sync
-        if [[ "$ALL_VERSIONS" == true ]]; then
-            versions_to_sync="$major_versions"
-        else
-            versions_to_sync=$(echo "$major_versions" | head -n "$VERSION_COUNT")
-        fi
-
+        local versions_to_sync=()
+        local v_cnt=0
         while IFS= read -r major; do
             [[ -z "$major" ]] && continue
+            if [[ "$ALL_VERSIONS" == true ]] || [[ $v_cnt -lt $VERSION_COUNT ]]; then
+                versions_to_sync+=("$major")
+                v_cnt=$((v_cnt + 1))
+            fi
+        done <<< "$major_versions"
+
+        local tag_rank=0
+        for major in "${versions_to_sync[@]}"; do
             local tag
             tag=$(get_version_tag "$all_tags" "$major")
-            [[ -n "$tag" ]] && targets_to_sync+=("${image_name}:${tag}")
-        done <<< "$versions_to_sync"
+            if [[ -n "$tag" ]]; then
+                tag_rank=$((tag_rank + 1))
+                local is_force=false
+                [[ $tag_rank -le 5 ]] && is_force=true
+                targets_to_sync+=("${image_name}:${tag} $is_force")
+            fi
+        done
 
-        if echo "$all_tags" | grep -q "^latest$"; then
-            targets_to_sync+=("${image_name}:latest")
+        local has_latest=false
+        while IFS= read -r tag; do
+            if [[ "$tag" == "latest" ]]; then
+                has_latest=true
+                break
+            fi
+        done <<< "$all_tags"
+
+        if [[ "$has_latest" == true ]]; then
+            targets_to_sync+=("${image_name}:latest true")
         fi
     done
 
     local total_targets=${#targets_to_sync[@]}
     log_info "已解析出 $total_targets 个待同步的镜像版本标签"
 
-    local sync_opts="--arch $ARCH"
-    [[ "$DRY_RUN" == true ]] && sync_opts="$sync_opts --dry-run"
-    [[ "$SKIP_EXISTING" == true ]] && sync_opts="$sync_opts --skip-existing"
-
     # 并行执行同步
     local idx=0
-    for full_img in "${targets_to_sync[@]}"; do
+    for item in "${targets_to_sync[@]}"; do
         idx=$((idx + 1))
-        echo "$idx $full_img"
-    done | xargs -P "$PARALLEL" -L 1 bash -c 'sync_single_target "$2" "$1"' _
+        echo "$idx $item"
+    done | xargs -P "$PARALLEL" -L 1 bash -c 'sync_single_target "$2" "$1" "$3"' _ || true
 
     # 统计
     local success_count=$(wc -l < "$SUCCESS_LIST" 2>/dev/null | tr -d ' ' || echo 0)
