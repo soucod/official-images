@@ -171,7 +171,6 @@ $:
             bash ./.cnb/scripts/sync-library.sh "${LIB_IMAGE_NAME}" \
               --versions "${VERSION_COUNT:-3}" \
               --arch "${SYNC_ARCH:-amd64}" \
-              --skip-existing \
               --continue-on-error
 
   # 按钮 5: 全量同步 library 所有官方镜像
@@ -192,5 +191,4 @@ $:
             bash ./.cnb/scripts/sync-library.sh --all \
               --versions "${VERSION_COUNT:-3}" \
               --arch "${SYNC_ARCH:-amd64}" \
-              --skip-existing \
               --continue-on-error
