@@ -4,20 +4,6 @@
 # 以 # 开头的行为注释
 
 
-nacos/nacos-server:latest
-nacos/nacos-server:3
-nacos/nacos-server:2
-nacos/nacos-server:1
-nacos/nacos-server:v3.1.0
-nacos/nacos-server:v3.0.3
-nacos/nacos-server:v3.0.2
-nacos/nacos-server:v3.0.1
-nacos/nacos-server:v3.0.0
-nacos/nacos-server:v2.5.1
-nacos/nacos-server:v2.5.0
-nacos/nacos-server:v2.4.3
-
-
 
 v2fly/v2fly-core:latest
 v2fly/v2fly-core:v5.16.1
@@ -521,13 +507,32 @@ nextcloud:29
 nextcloud:29.0.3-fpm-alpine
 
 nacos/nacos-server:latest
+
+nacos/nacos-server:latest
+nacos/nacos-server:3
+nacos/nacos-server:2
+nacos/nacos-server:1
+nacos/nacos-server:v3.2.4
+nacos/nacos-server:v3.2.3
+nacos/nacos-server:v3.2.2
+nacos/nacos-server:v3.2.1
+nacos/nacos-server:v3.1.1
+nacos/nacos-server:v3.1.0
+nacos/nacos-server:v3.0.3
+nacos/nacos-server:v3.0.2
+nacos/nacos-server:v3.0.1
+nacos/nacos-server:v3.0.0
+nacos/nacos-server:v2.5.4
+nacos/nacos-server:v2.5.3
+nacos/nacos-server:v2.5.2
+nacos/nacos-server:v2.5.1
+nacos/nacos-server:v2.5.0
+nacos/nacos-server:v2.4.3
 nacos/nacos-server:v2.4.2
 nacos/nacos-server:v2.4.1
 nacos/nacos-server:v2.3.2
 nacos/nacos-server:v2.2.3
 nacos/nacos-server:v1.4.8
-
-
 
 nginx:latest
 nginx:alpine
